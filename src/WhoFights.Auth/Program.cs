@@ -87,6 +87,10 @@ builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>(client =>
 {
     client.BaseAddress = new Uri("https://api.resend.com/");
 });
+builder.Services.AddHttpClient<GoogleTokenVerifier>(client =>
+{
+    client.BaseAddress = new Uri("https://oauth2.googleapis.com/");
+});
 
 // Any service holding SigningKey can verify a token independently - this is
 // what lets the API (and this service's own /auth/me) check "is this user

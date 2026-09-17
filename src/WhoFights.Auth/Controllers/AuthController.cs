@@ -3,7 +3,6 @@ using System.Net;
 using WhoFights.Auth.Models;
 using WhoFights.Auth.Options;
 using WhoFights.Auth.Services;
-using Google.Apis.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,39 +17,43 @@ public class AuthController(
     SignInManager<IdentityUser> signInManager,
     JwtTokenService jwtTokenService,
     IEmailSender emailSender,
-    IOptions<GoogleOptions> googleOptions,
+    GoogleTokenVerifier googleTokens,
     IOptions<FrontendOptions> frontendOptions,
     ILogger<AuthController> logger) : ControllerBase
 {
     private const string GoogleLoginProvider = "Google";
 
     /// <summary>
-    /// Exchanges a Google ID token (from the frontend's Sign In With Google button) for our own JWT. Creates the
-    /// user's account on their first sign-in - there's no separate registration step.
+    /// Exchanges a Google token (an ID token, or an access token from the OAuth popup our custom button uses) for
+    /// our own JWT. Creates the user's account on their first sign-in - there's no separate registration step.
     /// </summary>
     [HttpPost("google")]
     public async Task<ActionResult<AuthResponseDto>> SignInWithGoogle(GoogleSignInRequest request, CancellationToken ct)
     {
-        GoogleJsonWebSignature.Payload payload;
+        if (string.IsNullOrEmpty(request.IdToken) && string.IsNullOrEmpty(request.AccessToken))
+        {
+            return BadRequest("Either idToken or accessToken is required.");
+        }
+
+        GoogleIdentity identity;
         try
         {
-            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken, new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = [googleOptions.Value.ClientId],
-            });
+            identity = !string.IsNullOrEmpty(request.AccessToken)
+                ? await googleTokens.VerifyAccessTokenAsync(request.AccessToken, ct)
+                : await googleTokens.VerifyIdTokenAsync(request.IdToken!);
         }
-        catch (InvalidJwtException)
+        catch (InvalidGoogleTokenException)
         {
             return Unauthorized("The Google sign-in token is invalid or expired.");
         }
 
-        var user = await userManager.FindByLoginAsync(GoogleLoginProvider, payload.Subject);
+        var user = await userManager.FindByLoginAsync(GoogleLoginProvider, identity.Subject);
 
         if (user is null)
         {
             // Google verified this email is real and owned by whoever's signing in, so it's
             // trustworthy enough to skip the usual "click the link we emailed you" step.
-            user = new IdentityUser { UserName = payload.Email, Email = payload.Email, EmailConfirmed = true };
+            user = new IdentityUser { UserName = identity.Email, Email = identity.Email, EmailConfirmed = true };
 
             var createResult = await userManager.CreateAsync(user);
             if (!createResult.Succeeded)
@@ -58,7 +61,7 @@ public class AuthController(
                 return Problem(string.Join("; ", createResult.Errors.Select(e => e.Description)));
             }
 
-            var addLoginResult = await userManager.AddLoginAsync(user, new UserLoginInfo(GoogleLoginProvider, payload.Subject, GoogleLoginProvider));
+            var addLoginResult = await userManager.AddLoginAsync(user, new UserLoginInfo(GoogleLoginProvider, identity.Subject, GoogleLoginProvider));
             if (!addLoginResult.Succeeded)
             {
                 return Problem(string.Join("; ", addLoginResult.Errors.Select(e => e.Description)));
