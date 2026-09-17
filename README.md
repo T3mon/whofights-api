@@ -2,7 +2,7 @@
 
 Read-only JSON API aggregating upcoming combat sports events (UFC, ONE, RIZIN, BKFC, and other tracked promotions), scraped from [Tapology](https://www.tapology.com). Built to be the shared backend for whatever frontends come later (web, mobile, Telegram bot) rather than bundled with any one of them.
 
-This is one repo in a multi-repo project - for the full system architecture, why it's shaped this way, and a guide for onboarding a new contributor, see the **[project wiki](https://github.com/T3mon/fight-calendar-api/wiki)**. Everything below is specific to this repo.
+This is one repo in a multi-repo project - for the full system architecture, why it's shaped this way, and a guide for onboarding a new contributor, see the **[project wiki](https://github.com/T3mon/whofights-api/wiki)**. Everything below is specific to this repo.
 
 ## Tech stack
 
@@ -32,8 +32,8 @@ This is one repo in a multi-repo project - for the full system architecture, why
 Prerequisites: [.NET 10 SDK](https://dotnet.microsoft.com/download), [Docker Desktop](https://www.docker.com/products/docker-desktop/), the `dotnet-ef` tool (`dotnet tool install --global dotnet-ef`).
 
 ```bash
-git clone https://github.com/T3mon/fight-calendar-api.git
-cd fight-calendar-api
+git clone https://github.com/T3mon/whofights-api.git
+cd whofights-api
 
 # Start a local, throwaway Postgres (isolated - not Neon, not shared with anyone)
 docker compose up -d postgres
