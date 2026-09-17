@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- JSON-only API with no wwwroot - opt out instead of keeping an empty folder around. -->
     <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
-    <UserSecretsId>aspnet-WhoFights.Web-a9fd289b-e2dc-48bb-a17b-225a95fd8593</UserSecretsId>
+    <UserSecretsId>aspnet-WhoFights.Api-a9fd289b-e2dc-48bb-a17b-225a95fd8593</UserSecretsId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- CS1591: only the API surface gets /// doc comments, not every internal class.
          CS1573: the ambient CancellationToken param isn't part of the documented public contract. -->

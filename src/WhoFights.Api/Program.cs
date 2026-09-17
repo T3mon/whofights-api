@@ -16,9 +16,9 @@ if (builder.Environment.IsDevelopment())
     // project folder, and GetCustomAttribute returns null even though
     // it's present in the compiled AssemblyInfo). Load the secrets file
     // directly from its fixed OS path instead, using the id straight
-    // from WhoFights.Web.csproj's <UserSecretsId>. Same workaround as
+    // from WhoFights.Api.csproj's <UserSecretsId>. Same workaround as
     // WhoFights.Auth/Program.cs, which hit this first.
-    const string secretsId = "aspnet-WhoFights.Web-a9fd289b-e2dc-48bb-a17b-225a95fd8593";
+    const string secretsId = "aspnet-WhoFights.Api-a9fd289b-e2dc-48bb-a17b-225a95fd8593";
     var secretsDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "UserSecrets", secretsId);
     if (Directory.Exists(secretsDir))
     {

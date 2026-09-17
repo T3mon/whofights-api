@@ -2,12 +2,12 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY WhoFights.sln .
-COPY src/WhoFights.Web/WhoFights.Web.csproj src/WhoFights.Web/
+COPY src/WhoFights.Api/WhoFights.Api.csproj src/WhoFights.Api/
 COPY src/WhoFights.Data/WhoFights.Data.csproj src/WhoFights.Data/
-RUN dotnet restore src/WhoFights.Web/WhoFights.Web.csproj
+RUN dotnet restore src/WhoFights.Api/WhoFights.Api.csproj
 
 COPY src/ src/
-RUN dotnet publish src/WhoFights.Web/WhoFights.Web.csproj -c Release -o /app --no-restore
+RUN dotnet publish src/WhoFights.Api/WhoFights.Api.csproj -c Release -o /app --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
@@ -21,4 +21,4 @@ COPY --from=build /app .
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "WhoFights.Web.dll"]
+ENTRYPOINT ["dotnet", "WhoFights.Api.dll"]

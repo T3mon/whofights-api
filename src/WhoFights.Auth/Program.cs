@@ -125,7 +125,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
 
-// Same frontend-CORS pattern as WhoFights.Web - the frontend calls this
+// Same frontend-CORS pattern as WhoFights.Api - the frontend calls this
 // service directly from the browser to sign in.
 const string FrontendCorsPolicy = "Frontend";
 builder.Services.AddCors(options =>

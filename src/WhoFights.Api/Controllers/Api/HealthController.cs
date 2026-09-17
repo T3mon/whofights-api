@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WhoFights.Web.Controllers.Api;
+namespace WhoFights.Api.Controllers.Api;
 
 [ApiController]
 [Route("api/health")]

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Web", "src\WhoFights.Web\WhoFights.Web.csproj", "{88D1D267-F758-4E98-B6DE-EB89F73B4B6F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Api", "src\WhoFights.Api\WhoFights.Api.csproj", "{88D1D267-F758-4E98-B6DE-EB89F73B4B6F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Data", "src\WhoFights.Data\WhoFights.Data.csproj", "{887C0745-1703-4669-91E0-56A6EC2A174D}"
 EndProject

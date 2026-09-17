@@ -1,6 +1,6 @@
 namespace WhoFights.Data.Options;
 
-// Shared between WhoFights.Auth (mints tokens) and WhoFights.Web
+// Shared between WhoFights.Auth (mints tokens) and WhoFights.Api
 // (validates them) - both must bind the exact same Issuer/Audience/
 // SigningKey or a token minted by one is rejected by the other.
 public class JwtOptions

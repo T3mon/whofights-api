@@ -39,7 +39,7 @@ cd whofights-api
 docker compose up -d postgres
 
 # Apply the schema
-cd src/WhoFights.Web
+cd src/WhoFights.Api
 dotnet ef database update
 
 # Run it

@@ -1,4 +1,4 @@
-namespace WhoFights.Web.Models.Api;
+namespace WhoFights.Api.Models.Api;
 
 /// <summary>A combat sports promotion, e.g. UFC or ONE Championship.</summary>
 /// <param name="Id">Internal database id.</param>

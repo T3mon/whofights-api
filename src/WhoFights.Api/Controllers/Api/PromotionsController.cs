@@ -1,9 +1,9 @@
 using WhoFights.Data;
-using WhoFights.Web.Models.Api;
+using WhoFights.Api.Models.Api;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace WhoFights.Web.Controllers.Api;
+namespace WhoFights.Api.Controllers.Api;
 
 [ApiController]
 [Route("api/promotions")]

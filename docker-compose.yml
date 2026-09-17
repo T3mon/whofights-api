@@ -1,3 +1,7 @@
+# Explicit so containers are named whofights-api-1, whofights-auth-1, etc.
+# instead of taking the folder name as a prefix.
+name: whofights
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -15,7 +19,7 @@ services:
       timeout: 5s
       retries: 10
 
-  web:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
@@ -67,7 +71,7 @@ services:
       # sandbox sender only delivers to your own Resend account email
       # until a domain is verified, which is fine for local testing.
       Resend__ApiKey: "${RESEND_API_KEY}"
-      # Same reasoning as web's Cors__AllowedOrigins above.
+      # Same reasoning as api's Cors__AllowedOrigins above.
       Cors__AllowedOrigins__0: "http://localhost:5173"
       Cors__AllowedOrigins__1: "http://localhost:3000"
     depends_on:
