@@ -26,8 +26,11 @@ public class GoogleTokenVerifier(HttpClient httpClient, IOptions<GoogleOptions> 
             });
             return new GoogleIdentity(payload.Subject, payload.Email);
         }
-        catch (InvalidJwtException)
+        catch (Exception e) when (e is not HttpRequestException)
         {
+            // Malformed input surfaces as FormatException/JSON errors rather than
+            // InvalidJwtException; all of them mean "not a token we accept". Only a
+            // failure to reach Google's certificate endpoint is genuinely our problem.
             throw new InvalidGoogleTokenException();
         }
     }
