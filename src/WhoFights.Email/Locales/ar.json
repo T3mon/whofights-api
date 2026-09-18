@@ -1,0 +1,25 @@
+{
+  "digest": {
+    "subject": "نظرة على الأسبوع: {{count}}، {{range}}",
+    "title": "نظرة على الأسبوع",
+    "summary": "{{count}} من المنظمات التي تتابعها",
+    "events_zero": "لا أحداث",
+    "events_one": "حدث واحد",
+    "events_two": "حدثان",
+    "events_few": "{{n}} أحداث",
+    "events_many": "{{n}} حدثًا",
+    "events_other": "{{n}} حدث",
+    "fullCard": "البطاقة الكاملة",
+    "openCalendar": "افتح التقويم",
+    "whyTitle": "لماذا أتلقى هذا البريد؟",
+    "why": "أنت تتابع هذه المنظمات على WhoFights، لذا تصلك كل يوم اثنين أحداث الأسبوع المقبل. الأوقات معروضة بتوقيت {{zone}}.",
+    "managePromotions": "إدارة المنظمات المتابَعة",
+    "unsubscribe": "إلغاء الاشتراك",
+    "vs": "ضد"
+  },
+  "formats": {
+    "monthDay": "d MMM",
+    "dayHeading": "dddd، d MMMM",
+    "shortDay": "ddd d MMM"
+  }
+}

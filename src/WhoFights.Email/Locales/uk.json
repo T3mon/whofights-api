@@ -1,0 +1,23 @@
+{
+  "digest": {
+    "subject": "Огляд тижня: {{count}}, {{range}}",
+    "title": "Огляд тижня",
+    "summary": "{{count}} від промоушенів, які ви відстежуєте",
+    "events_one": "{{n}} подія",
+    "events_few": "{{n}} події",
+    "events_many": "{{n}} подій",
+    "events_other": "{{n}} події",
+    "fullCard": "Повна карта",
+    "openCalendar": "Відкрити календар",
+    "whyTitle": "Чому я отримав цей лист?",
+    "why": "Ви відстежуєте ці промоушени на WhoFights, тому щопонеділка отримуєте огляд наступного тижня. Час указано за {{zone}}.",
+    "managePromotions": "Налаштувати відстежувані промоушени",
+    "unsubscribe": "Відписатися",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "d MMM",
+    "dayHeading": "dddd, d MMMM",
+    "shortDay": "ddd, d MMM"
+  }
+}

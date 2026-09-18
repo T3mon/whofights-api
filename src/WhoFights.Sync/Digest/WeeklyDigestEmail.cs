@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using System.Text;
 using WhoFights.Data.Models.Domain;
@@ -6,36 +5,28 @@ using WhoFights.Email;
 
 namespace WhoFights.Sync.Digest;
 
-// Renders one user's digest: a Mon-Sun strip with a dot per event, then
-// every event of the week as a compact row. Everything on one screen -
-// the decision was to keep it tight rather than spotlight a headliner.
+// Renders one user's digest in their language: a 7-day strip with a dot
+// per event, then the week as a timeline grouped by day - time on the
+// left, a bar in the promotion's colour, title, main event, location.
+// Everything on one screen, no headliner spotlight.
 public static class WeeklyDigestEmail
 {
-    private static readonly CultureInfo Culture = CultureInfo.GetCultureInfo("en-US");
-
     public record Links(string Calendar, string ManagePromotions, string UnsubscribePage, string UnsubscribeEndpoint, Func<Event, string> Event);
 
-    public static EmailMessage Render(string to, IReadOnlyList<Event> events, DateOnly weekStart, TimeZoneInfo zone, Links links)
+    public static EmailMessage Render(string to, IReadOnlyList<Event> events, DateOnly weekStart, TimeZoneInfo zone, EmailLocale locale, Links links)
     {
         var ordered = events.OrderBy(e => e.StartsAt).ToList();
-        var weekEnd = weekStart.AddDays(6);
-        var range = weekStart.Month == weekEnd.Month
-            ? $"{weekStart.ToString("MMM d", Culture)} – {weekEnd.Day}"
-            : $"{weekStart.ToString("MMM d", Culture)} – {weekEnd.ToString("MMM d", Culture)}";
-        // Entity in the HTML so a client that guesses the wrong charset can't mangle the dash.
-        var rangeHtml = range.Replace("–", "&ndash;");
-        var promotions = ordered.Select(e => e.Promotion.Code).Distinct().Count();
-        var count = $"{ordered.Count} {(ordered.Count == 1 ? "event" : "events")}";
-        var summary = $"{count} from the {(promotions == 1 ? "promotion" : "promotions")} you track";
+        var range = $"{locale.Date(weekStart, "monthDay")} – {locale.Date(weekStart.AddDays(6), "monthDay")}";
+        var count = locale.Plural("digest.events", ordered.Count);
+        var summary = locale.T("digest.summary", ("count", count));
         var zoneLabel = ZoneLabel(zone);
-
-        var subject = $"Weekly outlook: {count}, {range}";
-        var preheader = string.Join(", ", ordered.Take(3).Select(ShortMatchup)) + (ordered.Count > 3 ? "…" : "");
+        var subject = locale.T("digest.subject", ("count", count), ("range", range));
+        var preheader = string.Join(", ", ordered.Take(3).Select(e => ShortMatchup(e, locale))) + (ordered.Count > 3 ? "…" : "");
 
         var body = new StringBuilder();
         body.Append($"""
-            <h1 style="margin:0 0 4px;font-size:26px;line-height:1.3;font-weight:700;color:{EmailLayout.TextBright};">Weekly outlook</h1>
-            <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:{EmailLayout.TextMuted};">{rangeHtml} &middot; {summary}</p>
+            <h1 style="margin:0 0 4px;font-size:26px;line-height:1.3;font-weight:700;color:{EmailLayout.TextBright};">{Html(locale.T("digest.title"))}</h1>
+            <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:{EmailLayout.TextMuted};">{Html(range)} &middot; {Html(summary)}</p>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
             """);
 
@@ -47,7 +38,7 @@ public static class WeeklyDigestEmail
             body.Append($"""
                 <td width="14%" align="center" style="padding:0 2px;">
                   <div style="background-color:{(dayEvents.Count > 0 ? "#2a2140" : EmailLayout.Surface)};border-radius:8px;padding:8px 0 6px;">
-                    <div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:{EmailLayout.TextMuted};">{day.ToString("ddd", Culture).ToUpperInvariant()}</div>
+                    <div style="font-size:10px;font-weight:700;letter-spacing:0.06em;color:{EmailLayout.TextMuted};">{Html(day.ToString("ddd", locale.Culture).ToUpper(locale.Culture))}</div>
                     <div style="font-size:17px;font-weight:800;color:{(dayEvents.Count > 0 ? EmailLayout.TextBright : EmailLayout.TextFaint)};margin:2px 0 4px;">{day.Day}</div>
                     <div style="height:6px;line-height:6px;font-size:0;">{(dots.Length > 0 ? dots : "&nbsp;")}</div>
                   </div>
@@ -56,52 +47,66 @@ public static class WeeklyDigestEmail
         }
 
         body.Append("</tr></table>");
-        body.Append($"""<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;">""");
+        body.Append("""<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;">""");
 
-        foreach (var e in ordered)
+        // The bar sits on the side the text starts from, with the gutter
+        // between time and bar mirrored to match.
+        var barSide = locale.IsRightToLeft ? "right" : "left";
+        var timePadding = locale.IsRightToLeft ? "8px 0 8px 12px" : "8px 12px 8px 0";
+        var textPadding = locale.IsRightToLeft ? "8px 12px 8px 0" : "8px 0 8px 12px";
+        foreach (var dayGroup in ordered.GroupBy(e => LocalDate(e, zone)))
         {
-            var local = TimeZoneInfo.ConvertTime(e.StartsAt, zone);
-            var sub = string.Join(" &middot; ", new[] { Html(e.Title), Html(ShortLocation(e.Location)) }.Where(s => s.Length > 0));
             body.Append($"""
-                <tr>
-                  <td valign="top" style="padding:10px 0;border-bottom:1px solid {EmailLayout.Border};font-size:12px;font-weight:700;color:{EmailLayout.TextMuted};white-space:nowrap;">{local.ToString("ddd d", Culture)}<br><span style="font-weight:400;">{local.ToString("h:mm tt", Culture)}</span></td>
-                  <td valign="top" style="padding:10px 12px;border-bottom:1px solid {EmailLayout.Border};">
-                    <div style="font-size:14px;font-weight:700;color:{EmailLayout.TextBright};">{Dot(e, 8, "0 7px 0 0")}{Html(Matchup(e))}</div>
-                    <div style="font-size:12px;color:{EmailLayout.TextMuted};margin-top:2px;">{sub}</div>
-                  </td>
-                  <td valign="middle" align="right" style="padding:10px 0;border-bottom:1px solid {EmailLayout.Border};white-space:nowrap;"><a href="{Html(links.Event(e))}" style="font-size:12px;font-weight:700;color:{EmailLayout.Link};text-decoration:none;">Card &rarr;</a></td>
-                </tr>
+                <tr><td colspan="2" style="padding:18px 0 6px;font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{EmailLayout.TextMuted};">{Html(locale.Date(dayGroup.Key, "dayHeading").ToUpper(locale.Culture))}</td></tr>
                 """);
+            foreach (var e in dayGroup)
+            {
+                var local = TimeZoneInfo.ConvertTime(e.StartsAt, zone);
+                var weight = MainEvent(e)?.WeightClass;
+                var weightHtml = weight is null ? "" : $""" <span style="color:{EmailLayout.TextFaint};">&middot; {Html(weight)}</span>""";
+                var location = ShortLocation(e.Location);
+                var locationHtml = location.Length > 0 ? $"{Html(location)} &middot; " : "";
+                body.Append($"""
+                    <tr>
+                      <td width="52" valign="top" style="padding:{timePadding};font-size:13px;font-weight:700;color:{EmailLayout.TextBody};white-space:nowrap;">{Html(locale.Time(local))}</td>
+                      <td valign="top" style="padding:{textPadding};border-{barSide}:3px solid {PromotionColors.For(e.Promotion.Code)};">
+                        <div style="font-size:15px;font-weight:700;color:{EmailLayout.TextBright};line-height:1.3;">{Html(e.Title)}</div>
+                        <div style="font-size:13px;color:{EmailLayout.TextBody};line-height:1.5;margin-top:2px;">{Html(Matchup(e, locale))}{weightHtml}</div>
+                        <div style="font-size:12px;color:{EmailLayout.TextFaint};line-height:1.5;">{locationHtml}{EmailLayout.TextLink(locale.T("digest.fullCard"), links.Event(e))}</div>
+                      </td>
+                    </tr>
+                    """);
+            }
         }
 
         body.Append("</table>");
-        body.Append($"""<div style="margin-top:26px;">{EmailLayout.Button("Open the calendar", links.Calendar)}</div>""");
+        body.Append($"""<div style="margin-top:28px;">{EmailLayout.Button(locale.T("digest.openCalendar"), links.Calendar)}</div>""");
 
-        var why = $"You track these promotions on WhoFights, so every Monday you get the week ahead. Times are shown in {Html(zoneLabel)}. "
-                  + $"{EmailLayout.TextLink("Manage tracked promotions", links.ManagePromotions)} &middot; {EmailLayout.TextLink("Unsubscribe", links.UnsubscribePage)}";
+        var why = $"{Html(locale.T("digest.why", ("zone", zoneLabel)))} "
+                  + $"{EmailLayout.TextLink(locale.T("digest.managePromotions"), links.ManagePromotions)} &middot; {EmailLayout.TextLink(locale.T("digest.unsubscribe"), links.UnsubscribePage)}";
 
         var text = new StringBuilder()
-            .AppendLine("WhoFights - Weekly outlook")
+            .AppendLine($"WhoFights - {locale.T("digest.title")}")
             .AppendLine($"{range} - {summary}")
             .AppendLine();
         foreach (var e in ordered)
         {
             var local = TimeZoneInfo.ConvertTime(e.StartsAt, zone);
-            text.AppendLine($"{local.ToString("ddd MMM d h:mm tt", Culture)}  {Matchup(e)}");
-            text.AppendLine($"  {string.Join(" - ", new[] { e.Title, ShortLocation(e.Location) }.Where(s => s.Length > 0))}");
+            text.AppendLine($"{locale.Date(local, "shortDay")} {locale.Time(local)}  {e.Title}");
+            text.AppendLine($"  {string.Join(" - ", new[] { Matchup(e, locale), ShortLocation(e.Location) }.Where(s => s.Length > 0))}");
             text.AppendLine($"  {links.Event(e)}");
             text.AppendLine();
         }
-        text.AppendLine($"Open the calendar: {links.Calendar}")
+        text.AppendLine($"{locale.T("digest.openCalendar")}: {links.Calendar}")
             .AppendLine()
-            .AppendLine($"You track these promotions on WhoFights, so every Monday you get the week ahead. Times in {zoneLabel}.")
-            .AppendLine($"Manage tracked promotions: {links.ManagePromotions}")
-            .AppendLine($"Unsubscribe: {links.UnsubscribePage}");
+            .AppendLine(locale.T("digest.why", ("zone", zoneLabel)))
+            .AppendLine($"{locale.T("digest.managePromotions")}: {links.ManagePromotions}")
+            .AppendLine($"{locale.T("digest.unsubscribe")}: {links.UnsubscribePage}");
 
         return new EmailMessage(
             to,
             subject,
-            EmailLayout.Wrap(body.ToString(), why, preheader),
+            EmailLayout.Wrap(body.ToString(), locale.T("digest.whyTitle"), why, preheader, locale.IsRightToLeft),
             text.ToString(),
             new Dictionary<string, string>
             {
@@ -118,11 +123,11 @@ public static class WeeklyDigestEmail
     private static Bout? MainEvent(Event e) => e.Bouts.OrderBy(b => b.OrderIndex).FirstOrDefault();
 
     // Same as matchupLabel in calendarData.ts: fighters if we know them, else the title.
-    private static string Matchup(Event e) =>
-        MainEvent(e) is { } m ? $"{m.FighterA.Name} vs {m.FighterB.Name}" : e.Title;
+    private static string Matchup(Event e, EmailLocale locale) =>
+        MainEvent(e) is { } m ? $"{m.FighterA.Name} {locale.T("digest.vs")} {m.FighterB.Name}" : e.Title;
 
-    private static string ShortMatchup(Event e) =>
-        MainEvent(e) is { } m ? $"{Surname(m.FighterA.Name)} vs {Surname(m.FighterB.Name)}" : e.Title;
+    private static string ShortMatchup(Event e, EmailLocale locale) =>
+        MainEvent(e) is { } m ? $"{Surname(m.FighterA.Name)} {locale.T("digest.vs")} {Surname(m.FighterB.Name)}" : e.Title;
 
     private static readonly HashSet<string> Suffixes = new(StringComparer.OrdinalIgnoreCase) { "jr.", "jr", "sr.", "sr", "ii", "iii", "iv" };
 

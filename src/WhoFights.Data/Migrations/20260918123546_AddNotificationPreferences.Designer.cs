@@ -12,7 +12,7 @@ using WhoFights.Data;
 namespace WhoFights.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260918113831_AddNotificationPreferences")]
+    [Migration("20260918123546_AddNotificationPreferences")]
     partial class AddNotificationPreferences
     {
         /// <inheritdoc />
@@ -335,6 +335,10 @@ namespace WhoFights.Data.Migrations
             modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationPreference", b =>
                 {
                     b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("TimeZone")

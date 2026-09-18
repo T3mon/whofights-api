@@ -21,17 +21,20 @@ public static class EmailLayout
     private const string Font = "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;";
 
     /// <param name="bodyHtml">Everything between the wordmark and the footer.</param>
-    /// <param name="whyHtml">The footer's answer to "Why am I receiving this email?" - already HTML.</param>
+    /// <param name="whyTitle">The footer heading, "Why am I receiving this email?" in the reader's language.</param>
+    /// <param name="whyHtml">The footer's answer - already HTML.</param>
     /// <param name="preheader">Plain text shown next to the subject in inbox previews, hidden in the body.</param>
-    public static string Wrap(string bodyHtml, string whyHtml, string? preheader = null)
+    /// <param name="rightToLeft">Flips the whole layout for RTL languages (Arabic).</param>
+    public static string Wrap(string bodyHtml, string whyTitle, string whyHtml, string? preheader = null, bool rightToLeft = false)
     {
         var preheaderHtml = preheader is null
             ? ""
             : $"""<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#14161b;">{WebUtility.HtmlEncode(preheader)}</div>""";
+        var dir = rightToLeft ? "rtl" : "ltr";
 
         return $"""
             {preheaderHtml}
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#14161b;padding:32px 12px;{Font}">
+            <table role="presentation" dir="{dir}" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#14161b;padding:32px 12px;{Font}">
               <tr>
                 <td align="center">
                   <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#1c1f26;border-radius:14px;overflow:hidden;">
@@ -47,7 +50,7 @@ public static class EmailLayout
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;border-top:1px solid {Border};">
                           <tr>
                             <td style="padding-top:22px;">
-                              <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:{TextBright};">Why am I receiving this email?</p>
+                              <p style="margin:0 0 8px;font-size:14px;font-weight:700;color:{TextBright};">{WebUtility.HtmlEncode(whyTitle)}</p>
                               <p style="margin:0;font-size:13px;line-height:1.6;color:{TextMuted};">{whyHtml}</p>
                             </td>
                           </tr>

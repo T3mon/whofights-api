@@ -18,6 +18,7 @@ namespace WhoFights.Data.Migrations
                     UserId = table.Column<string>(type: "text", nullable: false),
                     WeeklyDigestEmail = table.Column<bool>(type: "boolean", nullable: false),
                     TimeZone = table.Column<string>(type: "text", nullable: false),
+                    Language = table.Column<string>(type: "text", nullable: false),
                     UnsubscribeToken = table.Column<string>(type: "text", nullable: false),
                     WeeklyDigestLastSentAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },

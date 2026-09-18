@@ -13,6 +13,10 @@ public class NotificationPreference
     // this zone, so it matches what the calendar shows them.
     public string TimeZone { get; set; } = "UTC";
 
+    // Base language code as the calendar's language picker uses it ("en",
+    // "uk"...) - the digest is written in this language.
+    public string Language { get; set; } = "en";
+
     // Random, unguessable; lets the one-click link in an email switch the
     // digest off without a sign-in (email clients call it with no session).
     public required string UnsubscribeToken { get; set; }

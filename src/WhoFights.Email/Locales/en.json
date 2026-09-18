@@ -1,0 +1,21 @@
+{
+  "digest": {
+    "subject": "Weekly outlook: {{count}}, {{range}}",
+    "title": "Weekly outlook",
+    "summary": "{{count}} from the promotions you track",
+    "events_one": "{{n}} event",
+    "events_other": "{{n}} events",
+    "fullCard": "Full card",
+    "openCalendar": "Open the calendar",
+    "whyTitle": "Why am I receiving this email?",
+    "why": "You track these promotions on WhoFights, so every Monday you get the week ahead. Times are shown in {{zone}}.",
+    "managePromotions": "Manage tracked promotions",
+    "unsubscribe": "Unsubscribe",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "MMM d",
+    "dayHeading": "dddd, MMM d",
+    "shortDay": "ddd MMM d"
+  }
+}

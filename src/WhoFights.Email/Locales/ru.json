@@ -1,0 +1,23 @@
+{
+  "digest": {
+    "subject": "Обзор недели: {{count}}, {{range}}",
+    "title": "Обзор недели",
+    "summary": "{{count}} от промоушенов, которые вы отслеживаете",
+    "events_one": "{{n}} событие",
+    "events_few": "{{n}} события",
+    "events_many": "{{n}} событий",
+    "events_other": "{{n}} события",
+    "fullCard": "Полная карта",
+    "openCalendar": "Открыть календарь",
+    "whyTitle": "Почему я получил это письмо?",
+    "why": "Вы отслеживаете эти промоушены на WhoFights, поэтому каждый понедельник получаете обзор предстоящей недели. Время указано в {{zone}}.",
+    "managePromotions": "Настроить отслеживаемые промоушены",
+    "unsubscribe": "Отписаться",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "d MMM",
+    "dayHeading": "dddd, d MMMM",
+    "shortDay": "ddd, d MMM"
+  }
+}

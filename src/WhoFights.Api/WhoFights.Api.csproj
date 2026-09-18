@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WhoFights.Data\WhoFights.Data.csproj" />
+    <ProjectReference Include="..\WhoFights.Email\WhoFights.Email.csproj" />
   </ItemGroup>
 
 </Project>

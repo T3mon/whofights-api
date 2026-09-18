@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using WhoFights.Api.Models.Api;
 using WhoFights.Data;
 using WhoFights.Data.Models.Domain;
+using WhoFights.Email;
 
 namespace WhoFights.Api.Controllers.Api;
 
@@ -69,8 +70,8 @@ public class MeController(ApplicationDbContext db) : ControllerBase
     {
         var prefs = await db.NotificationPreferences.FindAsync([CurrentUserId], ct);
         return Ok(prefs is null
-            ? new NotificationPreferencesDto(false, "UTC")
-            : new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone));
+            ? new NotificationPreferencesDto(false, "UTC", EmailLocale.Default)
+            : new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone, prefs.Language));
     }
 
     [HttpPut("notifications")]
@@ -95,8 +96,9 @@ public class MeController(ApplicationDbContext db) : ControllerBase
 
         prefs.WeeklyDigestEmail = request.WeeklyDigestEmail;
         prefs.TimeZone = request.TimeZone;
+        prefs.Language = EmailLocale.Normalize(request.Language);
         await db.SaveChangesAsync(ct);
 
-        return Ok(new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone));
+        return Ok(new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone, prefs.Language));
     }
 }

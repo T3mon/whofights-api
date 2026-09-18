@@ -87,7 +87,7 @@ public class WeeklyDigestService(
                 continue;
             }
 
-            var message = WeeklyDigestEmail.Render(recipient.Email!, events, weekStart, zone, LinksFor(recipient.Prefs));
+            var message = WeeklyDigestEmail.Render(recipient.Email!, events, weekStart, zone, EmailLocale.For(recipient.Prefs.Language), LinksFor(recipient.Prefs));
             try
             {
                 await emailSender.SendAsync(message, ct);

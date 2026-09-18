@@ -1,0 +1,21 @@
+{
+  "digest": {
+    "subject": "Aperçu de la semaine : {{count}}, {{range}}",
+    "title": "Aperçu de la semaine",
+    "summary": "{{count}} des promotions que vous suivez",
+    "events_one": "{{n}} événement",
+    "events_other": "{{n}} événements",
+    "fullCard": "Carte complète",
+    "openCalendar": "Ouvrir le calendrier",
+    "whyTitle": "Pourquoi je reçois cet e-mail ?",
+    "why": "Vous suivez ces promotions sur WhoFights, vous recevez donc chaque lundi la semaine à venir. Les horaires sont affichés en {{zone}}.",
+    "managePromotions": "Gérer les promotions suivies",
+    "unsubscribe": "Se désabonner",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "d MMM",
+    "dayHeading": "dddd d MMM",
+    "shortDay": "ddd d MMM"
+  }
+}

@@ -334,6 +334,10 @@ namespace WhoFights.Data.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("text");
 
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("TimeZone")
                         .IsRequired()
                         .HasColumnType("text");

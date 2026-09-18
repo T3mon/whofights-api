@@ -1,0 +1,21 @@
+{
+  "digest": {
+    "subject": "Resumen semanal: {{count}}, {{range}}",
+    "title": "Resumen semanal",
+    "summary": "{{count}} de las promotoras que sigues",
+    "events_one": "{{n}} evento",
+    "events_other": "{{n}} eventos",
+    "fullCard": "Cartelera completa",
+    "openCalendar": "Abrir el calendario",
+    "whyTitle": "¿Por qué recibo este correo?",
+    "why": "Sigues estas promotoras en WhoFights, así que cada lunes recibes la semana que viene. Los horarios se muestran en {{zone}}.",
+    "managePromotions": "Gestionar promotoras seguidas",
+    "unsubscribe": "Cancelar suscripción",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "d MMM",
+    "dayHeading": "dddd, d MMM",
+    "shortDay": "ddd d MMM"
+  }
+}

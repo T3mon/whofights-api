@@ -1,0 +1,20 @@
+{
+  "digest": {
+    "subject": "每周赛事速览：{{count}}，{{range}}",
+    "title": "每周赛事速览",
+    "summary": "来自你关注的赛事组织的 {{count}}",
+    "events_other": "{{n}} 场赛事",
+    "fullCard": "完整赛事卡",
+    "openCalendar": "打开日历",
+    "whyTitle": "为什么我会收到这封邮件？",
+    "why": "你在 WhoFights 上关注了这些赛事组织，因此每周一都会收到未来一周的赛事。时间按 {{zone}} 显示。",
+    "managePromotions": "管理关注的赛事组织",
+    "unsubscribe": "退订",
+    "vs": "vs"
+  },
+  "formats": {
+    "monthDay": "M月d日",
+    "dayHeading": "M月d日 dddd",
+    "shortDay": "M月d日 ddd"
+  }
+}

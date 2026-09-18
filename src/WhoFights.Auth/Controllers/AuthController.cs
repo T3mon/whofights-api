@@ -293,7 +293,7 @@ public class AuthController(
             {EmailLayout.Button("Confirm email address", link, padding: "14px 28px")}
             """;
         const string why = "Someone used this address to create a WhoFights account. If that wasn't you, you can ignore this email - the account can't be used until it's confirmed, and this link expires.";
-        var html = EmailLayout.Wrap(body, why);
+        var html = EmailLayout.Wrap(body, "Why am I receiving this email?", why);
         await emailSender.SendAsync(new EmailMessage(user.Email!, "Confirm your WhoFights account", html), ct);
     }
 }
