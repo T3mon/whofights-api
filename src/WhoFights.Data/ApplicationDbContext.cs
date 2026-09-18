@@ -77,7 +77,11 @@ public class ApplicationDbContext : IdentityDbContext
                 .HasForeignKey(f => f.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            e.HasIndex(f => new { f.UserId, f.PromotionId, f.FighterId }).IsUnique();
+            e.HasIndex(f => new { f.UserId, f.PromotionId, f.SubSeries, f.FighterId }).IsUnique();
+
+            e.ToTable(t => t.HasCheckConstraint(
+                "CK_UserFollow_SubSeriesNeedsPromotion",
+                "\"SubSeries\" IS NULL OR \"PromotionId\" IS NOT NULL"));
 
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_UserFollow_ExactlyOneTarget",
