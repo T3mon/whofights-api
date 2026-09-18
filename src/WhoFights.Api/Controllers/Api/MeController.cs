@@ -14,8 +14,6 @@ namespace WhoFights.Api.Controllers.Api;
 [Authorize]
 public class MeController(ApplicationDbContext db) : ControllerBase
 {
-    private const string SubSeriesSeparator = "::";
-
     // Identity always comes from the token, never from the request - a client
     // can't be trusted to say whose follows it is editing.
     private string CurrentUserId => User.FindFirst(JwtRegisteredClaimNames.Sub)!.Value;
@@ -30,7 +28,7 @@ public class MeController(ApplicationDbContext db) : ControllerBase
             .Select(f => new { f.Promotion!.Code, f.SubSeries })
             .ToListAsync(ct);
 
-        return Ok(new PromotionFollowsDto(keys.Select(k => ToKey(k.Code, k.SubSeries)).ToList()));
+        return Ok(new PromotionFollowsDto(keys.Select(k => FollowKeys.ToKey(k.Code, k.SubSeries)).ToList()));
     }
 
     /// <summary>
@@ -44,7 +42,7 @@ public class MeController(ApplicationDbContext db) : ControllerBase
         var promotionIdsByCode = await db.Promotions.ToDictionaryAsync(p => p.Code, p => p.Id, ct);
 
         var wanted = request.PromotionKeys
-            .Select(ParseKey)
+            .Select(FollowKeys.Parse)
             .Where(k => promotionIdsByCode.ContainsKey(k.Code))
             .Distinct()
             .ToList();
@@ -62,15 +60,43 @@ public class MeController(ApplicationDbContext db) : ControllerBase
         }));
         await db.SaveChangesAsync(ct);
 
-        return Ok(new PromotionFollowsDto(wanted.Select(k => ToKey(k.Code, k.SubSeries)).ToList()));
+        return Ok(new PromotionFollowsDto(wanted.Select(k => FollowKeys.ToKey(k.Code, k.SubSeries)).ToList()));
     }
 
-    private static string ToKey(string code, string? subSeries) =>
-        subSeries is null ? code : code + SubSeriesSeparator + subSeries;
-
-    private static (string Code, string? SubSeries) ParseKey(string key)
+    /// <summary>The user's notification settings. Everything is off until they save something.</summary>
+    [HttpGet("notifications")]
+    public async Task<ActionResult<NotificationPreferencesDto>> GetNotifications(CancellationToken ct)
     {
-        var at = key.IndexOf(SubSeriesSeparator, StringComparison.Ordinal);
-        return at < 0 ? (key, null) : (key[..at], key[(at + SubSeriesSeparator.Length)..]);
+        var prefs = await db.NotificationPreferences.FindAsync([CurrentUserId], ct);
+        return Ok(prefs is null
+            ? new NotificationPreferencesDto(false, "UTC")
+            : new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone));
+    }
+
+    [HttpPut("notifications")]
+    public async Task<ActionResult<NotificationPreferencesDto>> PutNotifications(NotificationPreferencesDto request, CancellationToken ct)
+    {
+        if (!TimeZoneInfo.TryFindSystemTimeZoneById(request.TimeZone, out _))
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: $"Unknown time zone '{request.TimeZone}'.");
+        }
+
+        var userId = CurrentUserId;
+        var prefs = await db.NotificationPreferences.FindAsync([userId], ct);
+        if (prefs is null)
+        {
+            prefs = new NotificationPreference
+            {
+                UserId = userId,
+                UnsubscribeToken = NotificationPreferenceTokens.Generate(),
+            };
+            db.NotificationPreferences.Add(prefs);
+        }
+
+        prefs.WeeklyDigestEmail = request.WeeklyDigestEmail;
+        prefs.TimeZone = request.TimeZone;
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone));
     }
 }

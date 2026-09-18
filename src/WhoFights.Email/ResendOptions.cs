@@ -1,4 +1,4 @@
-namespace WhoFights.Auth.Options;
+namespace WhoFights.Email;
 
 public class ResendOptions
 {

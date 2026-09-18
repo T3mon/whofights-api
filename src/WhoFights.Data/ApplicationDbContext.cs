@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Bout> Bouts => Set<Bout>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -86,6 +87,19 @@ public class ApplicationDbContext : IdentityDbContext
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_UserFollow_ExactlyOneTarget",
                 "(\"PromotionId\" IS NOT NULL) <> (\"FighterId\" IS NOT NULL)"));
+        });
+
+        builder.Entity<NotificationPreference>(e =>
+        {
+            e.HasKey(p => p.UserId);
+            e.HasIndex(p => p.UnsubscribeToken).IsUnique();
+
+            // Same reasoning as UserFollow: no navigation back to the user,
+            // just cleanup when the account goes.
+            e.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

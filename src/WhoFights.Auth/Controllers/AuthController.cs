@@ -3,6 +3,7 @@ using System.Net;
 using WhoFights.Auth.Models;
 using WhoFights.Auth.Options;
 using WhoFights.Auth.Services;
+using WhoFights.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -284,44 +285,15 @@ public class AuthController(
     {
         var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
         var link = $"{frontendOptions.Value.BaseUrl}/confirm-email?userId={Uri.EscapeDataString(user.Id)}&token={Uri.EscapeDataString(token)}";
-        // Table layout and inline styles only - email clients strip <style> blocks
-        // and ignore most modern CSS. Colors mirror the site's dark theme and the
-        // purple of the logo so the mail reads as part of the same product.
-        var html = $"""
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#14161b;padding:32px 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-              <tr>
-                <td align="center">
-                  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#1c1f26;border-radius:14px;overflow:hidden;">
-                    <tr>
-                      <td style="background-color:#863bff;height:6px;line-height:6px;font-size:0;">&nbsp;</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:36px 40px 40px;">
-                        <div style="font-size:20px;font-weight:700;margin-bottom:28px;">
-                          <span style="color:#e63946;">Who</span><span style="color:#e6c200;">Fights</span>
-                        </div>
-                        <h1 style="margin:0 0 20px;font-size:26px;line-height:1.3;font-weight:700;color:#f0f0f0;">Confirm your email address</h1>
-                        <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:#cbd2dc;">
-                          To finish setting up your WhoFights account, confirm this email address. You'll be signed in automatically.
-                        </p>
-                        <a href="{WebUtility.HtmlEncode(link)}" style="display:inline-block;background-color:#863bff;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:8px;">Confirm email address</a>
-                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;border-top:1px solid #2c303a;">
-                          <tr>
-                            <td style="padding-top:24px;">
-                              <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:#f0f0f0;">Why am I receiving this email?</p>
-                              <p style="margin:0;font-size:13px;line-height:1.6;color:#9aa0aa;">
-                                Someone used this address to create a WhoFights account. If that wasn't you, you can ignore this email - the account can't be used until it's confirmed, and this link expires.
-                              </p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
+        var body = $"""
+            <h1 style="margin:0 0 20px;font-size:26px;line-height:1.3;font-weight:700;color:{EmailLayout.TextBright};">Confirm your email address</h1>
+            <p style="margin:0 0 28px;font-size:15px;line-height:1.6;color:{EmailLayout.TextBody};">
+              To finish setting up your WhoFights account, confirm this email address. You'll be signed in automatically.
+            </p>
+            {EmailLayout.Button("Confirm email address", link, padding: "14px 28px")}
             """;
-        await emailSender.SendAsync(user.Email!, "Confirm your WhoFights account", html, ct);
+        const string why = "Someone used this address to create a WhoFights account. If that wasn't you, you can ignore this email - the account can't be used until it's confirmed, and this link expires.";
+        var html = EmailLayout.Wrap(body, why);
+        await emailSender.SendAsync(new EmailMessage(user.Email!, "Confirm your WhoFights account", html), ct);
     }
 }

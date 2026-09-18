@@ -47,6 +47,14 @@ services:
       dockerfile: Dockerfile.Sync
     environment:
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=whofights;Username=whofights;Password=whofights"
+      # The Monday digest mails through the same Resend key auth uses (see
+      # below). Links point at the local frontend and the api container.
+      Resend__ApiKey: "${RESEND_API_KEY}"
+      Digest__FrontendBaseUrl: "http://localhost:5173"
+      Digest__ApiBaseUrl: "http://localhost:8080"
+      # Set to "true" for a one-off `docker compose run --rm sync` to send
+      # the digest today instead of waiting for Monday.
+      Digest__Force: "${DIGEST_FORCE:-false}"
     depends_on:
       postgres:
         condition: service_healthy

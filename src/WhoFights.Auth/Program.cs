@@ -1,6 +1,7 @@
 using System.Text;
 using WhoFights.Auth.Options;
 using WhoFights.Auth.Services;
+using WhoFights.Email;
 using WhoFights.Data;
 using WhoFights.Data.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -76,17 +77,7 @@ if (string.IsNullOrWhiteSpace(frontendOptions.BaseUrl))
 }
 builder.Services.AddSingleton(Options.Create(frontendOptions));
 
-var resendOptions = builder.Configuration.GetSection(ResendOptions.SectionName).Get<ResendOptions>()
-    ?? throw new InvalidOperationException("Resend configuration section is missing.");
-if (string.IsNullOrWhiteSpace(resendOptions.ApiKey) || string.IsNullOrWhiteSpace(resendOptions.FromAddress))
-{
-    throw new InvalidOperationException("Resend:ApiKey / Resend:FromAddress is not configured.");
-}
-builder.Services.AddSingleton(Options.Create(resendOptions));
-builder.Services.AddHttpClient<IEmailSender, ResendEmailSender>(client =>
-{
-    client.BaseAddress = new Uri("https://api.resend.com/");
-});
+builder.Services.AddResendEmail(builder.Configuration);
 builder.Services.AddHttpClient<GoogleTokenVerifier>(client =>
 {
     client.BaseAddress = new Uri("https://oauth2.googleapis.com/");

@@ -4,6 +4,7 @@ WORKDIR /src
 COPY WhoFights.sln .
 COPY src/WhoFights.Sync/WhoFights.Sync.csproj src/WhoFights.Sync/
 COPY src/WhoFights.Data/WhoFights.Data.csproj src/WhoFights.Data/
+COPY src/WhoFights.Email/WhoFights.Email.csproj src/WhoFights.Email/
 RUN dotnet restore src/WhoFights.Sync/WhoFights.Sync.csproj
 
 COPY src/ src/
@@ -15,7 +16,8 @@ WORKDIR /app
 # Npgsql probes for GSSAPI/Kerberos support on every connection; the slim
 # runtime image doesn't ship it, which prints a harmless but noisy error to
 # the logs on every connection attempt otherwise.
-RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 && rm -rf /var/lib/apt/lists/*
+# tzdata: the weekly digest renders times in each user's own zone.
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 tzdata && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /app .
 
