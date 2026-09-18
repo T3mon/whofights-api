@@ -1,4 +1,4 @@
-namespace WhoFights.Sync.Digest;
+namespace WhoFights.Notifications;
 
 // Same palette and same fallback hash as promotionColors.ts in
 // whofights-web-ui, so the dot next to an event in the email is the color

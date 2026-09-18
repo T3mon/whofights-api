@@ -1,0 +1,24 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+COPY WhoFights.sln .
+COPY src/WhoFights.Notifications/WhoFights.Notifications.csproj src/WhoFights.Notifications/
+COPY src/WhoFights.Data/WhoFights.Data.csproj src/WhoFights.Data/
+COPY src/WhoFights.Email/WhoFights.Email.csproj src/WhoFights.Email/
+RUN dotnet restore src/WhoFights.Notifications/WhoFights.Notifications.csproj
+
+COPY src/ src/
+RUN dotnet publish src/WhoFights.Notifications/WhoFights.Notifications.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS runtime
+WORKDIR /app
+
+# Npgsql probes for GSSAPI/Kerberos support on every connection; the slim
+# runtime image doesn't ship it, which prints a harmless but noisy error to
+# the logs on every connection attempt otherwise.
+# tzdata: notifications pick their moment and render times in each user's own zone.
+RUN apt-get update && apt-get install -y --no-install-recommends libgssapi-krb5-2 tzdata && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app .
+
+ENTRYPOINT ["dotnet", "WhoFights.Notifications.dll"]

@@ -3,33 +3,19 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using WhoFights.Data;
 
-namespace WhoFights.Email;
+namespace WhoFights.Notifications.Localization;
 
-// The reader's language for an email: strings from Locales/<code>.json (same
-// {{placeholder}} and _one/_few/_many/_other conventions as the frontend's
-// i18next files, so text can be copied between the two) plus the .NET
-// culture for weekday/month names and time formats. Falls back to English
-// for anything unknown rather than ever failing a send over a label.
-public sealed partial class EmailLocale
+// The reader's language for a notification, whatever the channel: strings
+// from Locales/<code>.json (same {{placeholder}} and _one/_few/_many/_other
+// conventions as the frontend's i18next files, so text can be copied
+// between the two) plus the .NET culture for weekday/month names and time
+// formats. Falls back to English for anything unknown rather than ever
+// failing a send over a label.
+public sealed partial class NotificationLocale
 {
-    public const string Default = "en";
-
-    // Base codes exactly as the frontend registers them; region-tagged
-    // variants ("en-US") are normalised down to these.
-    private static readonly Dictionary<string, string> Cultures = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["en"] = "en-US",
-        ["es"] = "es-ES",
-        ["pt"] = "pt-BR",
-        ["fr"] = "fr-FR",
-        ["ru"] = "ru-RU",
-        ["uk"] = "uk-UA",
-        ["zh"] = "zh-CN",
-        ["ar"] = "ar-EG",
-    };
-
-    private static readonly ConcurrentDictionary<string, EmailLocale> Cache = new();
+    private static readonly ConcurrentDictionary<string, NotificationLocale> Cache = new();
 
     public string Code { get; }
     public CultureInfo Culture { get; }
@@ -37,25 +23,16 @@ public sealed partial class EmailLocale
 
     private readonly Dictionary<string, string> _strings;
 
-    private EmailLocale(string code, CultureInfo culture, Dictionary<string, string> strings)
+    private NotificationLocale(string code, CultureInfo culture, Dictionary<string, string> strings)
     {
         Code = code;
         Culture = culture;
         _strings = strings;
     }
 
-    public static bool IsSupported(string? code) => code is not null && Cultures.ContainsKey(Normalize(code));
+    public static NotificationLocale For(string? code) => Cache.GetOrAdd(Languages.Normalize(code), Load);
 
-    /// <summary>"en-US" → "en"; anything unsupported → "en".</summary>
-    public static string Normalize(string? code)
-    {
-        var baseCode = (code ?? "").Split('-')[0].ToLowerInvariant();
-        return Cultures.ContainsKey(baseCode) ? baseCode : Default;
-    }
-
-    public static EmailLocale For(string? code) => Cache.GetOrAdd(Normalize(code), Load);
-
-    private static EmailLocale Load(string code)
+    private static NotificationLocale Load(string code)
     {
         using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"Locales.{code}.json")
             ?? throw new InvalidOperationException($"Embedded locale Locales/{code}.json is missing.");
@@ -72,13 +49,13 @@ public sealed partial class EmailLocale
             }
         }
 
-        return new EmailLocale(code, CultureInfo.GetCultureInfo(Cultures[code]), strings);
+        return new NotificationLocale(code, CultureInfo.GetCultureInfo(Languages.Cultures[code]), strings);
     }
 
     /// <summary>A plain string with {{name}} placeholders filled in.</summary>
     public string T(string key, params (string Name, object Value)[] args)
     {
-        var template = _strings.TryGetValue(key, out var s) ? s : For(Default)._strings.GetValueOrDefault(key, key);
+        var template = _strings.TryGetValue(key, out var s) ? s : For(Languages.Default)._strings.GetValueOrDefault(key, key);
         return Placeholder().Replace(template, m =>
         {
             foreach (var (name, value) in args)

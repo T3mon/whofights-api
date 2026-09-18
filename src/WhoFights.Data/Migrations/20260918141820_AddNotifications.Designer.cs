@@ -12,8 +12,8 @@ using WhoFights.Data;
 namespace WhoFights.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260918123546_AddNotificationPreferences")]
-    partial class AddNotificationPreferences
+    [Migration("20260918141820_AddNotifications")]
+    partial class AddNotifications
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -332,6 +332,41 @@ namespace WhoFights.Data.Migrations
                     b.ToTable("Fighters");
                 });
 
+            modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Kind", "Channel", "Reference")
+                        .IsUnique();
+
+                    b.ToTable("NotificationLogs");
+                });
+
             modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationPreference", b =>
                 {
                     b.Property<string>("UserId")
@@ -349,18 +384,28 @@ namespace WhoFights.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<bool>("WeeklyDigestEmail")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset?>("WeeklyDigestLastSentAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.HasKey("UserId");
 
                     b.HasIndex("UnsubscribeToken")
                         .IsUnique();
 
                     b.ToTable("NotificationPreferences");
+                });
+
+            modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationSubscription", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Kind")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Channel")
+                        .HasColumnType("text");
+
+                    b.HasKey("UserId", "Kind", "Channel");
+
+                    b.ToTable("NotificationSubscriptions");
                 });
 
             modelBuilder.Entity("WhoFights.Data.Models.Domain.Promotion", b =>
@@ -517,7 +562,25 @@ namespace WhoFights.Data.Migrations
                     b.Navigation("Promotion");
                 });
 
+            modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationLog", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationPreference", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WhoFights.Data.Models.Domain.NotificationSubscription", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()

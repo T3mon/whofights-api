@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using WhoFights.Api.Models.Api;
 using WhoFights.Data;
 using WhoFights.Data.Models.Domain;
-using WhoFights.Email;
 
 namespace WhoFights.Api.Controllers.Api;
 
@@ -66,20 +65,39 @@ public class MeController(ApplicationDbContext db) : ControllerBase
 
     /// <summary>The user's notification settings. Everything is off until they save something.</summary>
     [HttpGet("notifications")]
-    public async Task<ActionResult<NotificationPreferencesDto>> GetNotifications(CancellationToken ct)
+    public async Task<ActionResult<NotificationSettingsDto>> GetNotifications(CancellationToken ct)
     {
-        var prefs = await db.NotificationPreferences.FindAsync([CurrentUserId], ct);
-        return Ok(prefs is null
-            ? new NotificationPreferencesDto(false, "UTC", EmailLocale.Default)
-            : new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone, prefs.Language));
+        var userId = CurrentUserId;
+        var prefs = await db.NotificationPreferences.FindAsync([userId], ct);
+        var subscriptions = await db.NotificationSubscriptions
+            .Where(s => s.UserId == userId)
+            .Select(s => new NotificationCellDto(s.Kind, s.Channel))
+            .ToListAsync(ct);
+
+        return Ok(new NotificationSettingsDto(
+            prefs?.TimeZone ?? "UTC",
+            prefs?.Language ?? Languages.Default,
+            subscriptions,
+            AvailableCells()));
     }
 
+    /// <summary>
+    /// Replaces the user's notification settings. Cells that no channel can deliver today are refused
+    /// (400) rather than stored silently - the grid the frontend renders comes from the same rules.
+    /// </summary>
     [HttpPut("notifications")]
-    public async Task<ActionResult<NotificationPreferencesDto>> PutNotifications(NotificationPreferencesDto request, CancellationToken ct)
+    public async Task<ActionResult<NotificationSettingsDto>> PutNotifications(NotificationSettingsDto request, CancellationToken ct)
     {
         if (!TimeZoneInfo.TryFindSystemTimeZoneById(request.TimeZone, out _))
         {
             return Problem(statusCode: StatusCodes.Status400BadRequest, detail: $"Unknown time zone '{request.TimeZone}'.");
+        }
+
+        var wanted = request.Subscriptions.Distinct().ToList();
+        var locked = wanted.FirstOrDefault(c => !NotificationRules.IsAvailable(c.Kind, c.Channel));
+        if (locked is not null)
+        {
+            return Problem(statusCode: StatusCodes.Status400BadRequest, detail: $"{locked.Kind} cannot be delivered via {locked.Channel}.");
         }
 
         var userId = CurrentUserId;
@@ -94,11 +112,19 @@ public class MeController(ApplicationDbContext db) : ControllerBase
             db.NotificationPreferences.Add(prefs);
         }
 
-        prefs.WeeklyDigestEmail = request.WeeklyDigestEmail;
         prefs.TimeZone = request.TimeZone;
-        prefs.Language = EmailLocale.Normalize(request.Language);
+        prefs.Language = Languages.Normalize(request.Language);
+
+        db.NotificationSubscriptions.RemoveRange(db.NotificationSubscriptions.Where(s => s.UserId == userId));
+        db.NotificationSubscriptions.AddRange(wanted.Select(c => new NotificationSubscription
+        {
+            UserId = userId, Kind = c.Kind, Channel = c.Channel,
+        }));
         await db.SaveChangesAsync(ct);
 
-        return Ok(new NotificationPreferencesDto(prefs.WeeklyDigestEmail, prefs.TimeZone, prefs.Language));
+        return Ok(new NotificationSettingsDto(prefs.TimeZone, prefs.Language, wanted, AvailableCells()));
     }
+
+    private static List<NotificationCellDto> AvailableCells() =>
+        NotificationRules.AvailableCells().Select(c => new NotificationCellDto(c.Kind, c.Channel)).ToList();
 }

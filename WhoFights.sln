@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Auth", "src\WhoFi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Email", "src\WhoFights.Email\WhoFights.Email.csproj", "{3AA77E4C-072A-4E36-A3FE-928E1D5DAB85}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhoFights.Notifications", "src\WhoFights.Notifications\WhoFights.Notifications.csproj", "{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,18 @@ Global
 		{3AA77E4C-072A-4E36-A3FE-928E1D5DAB85}.Release|x64.Build.0 = Release|Any CPU
 		{3AA77E4C-072A-4E36-A3FE-928E1D5DAB85}.Release|x86.ActiveCfg = Release|Any CPU
 		{3AA77E4C-072A-4E36-A3FE-928E1D5DAB85}.Release|x86.Build.0 = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|x64.Build.0 = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Debug|x86.Build.0 = Debug|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|x64.ActiveCfg = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|x64.Build.0 = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|x86.ActiveCfg = Release|Any CPU
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,5 +109,6 @@ Global
 		{F94E6651-0F18-4975-80D6-4854F52603C0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{750A57A5-730B-4DF1-85DE-D526B1FAA856} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{3AA77E4C-072A-4E36-A3FE-928E1D5DAB85} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{DCD8AA1A-4690-4088-B5A9-60514A17F1CF} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal

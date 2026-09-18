@@ -47,14 +47,26 @@ services:
       dockerfile: Dockerfile.Sync
     environment:
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=whofights;Username=whofights;Password=whofights"
-      # The Monday digest mails through the same Resend key auth uses (see
-      # below). Links point at the local frontend and the api container.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # One-shot like sync: `docker compose run --rm notifications`. On Render
+  # this is its own cron job every half hour; locally you run it by hand.
+  notifications:
+    build:
+      context: .
+      dockerfile: Dockerfile.Notifications
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=whofights;Username=whofights;Password=whofights"
+      # Mails through the same Resend key auth uses (see below). Links point
+      # at the local frontend and the api container.
       Resend__ApiKey: "${RESEND_API_KEY}"
-      Digest__FrontendBaseUrl: "http://localhost:5173"
-      Digest__ApiBaseUrl: "http://localhost:8080"
-      # Set to "true" for a one-off `docker compose run --rm sync` to send
-      # the digest today instead of waiting for Monday.
-      Digest__Force: "${DIGEST_FORCE:-false}"
+      Notifications__FrontendBaseUrl: "http://localhost:5173"
+      Notifications__ApiBaseUrl: "http://localhost:8080"
+      # "true" makes every kind due right now instead of waiting for its
+      # moment (the sent-log still applies) - for trying it out.
+      Notifications__Force: "${NOTIFICATIONS_FORCE:-false}"
     depends_on:
       postgres:
         condition: service_healthy

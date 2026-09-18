@@ -18,6 +18,8 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<Bout> Bouts => Set<Bout>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<NotificationSubscription> NotificationSubscriptions => Set<NotificationSubscription>();
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -99,6 +101,28 @@ public class ApplicationDbContext : IdentityDbContext
             e.HasOne<IdentityUser>()
                 .WithMany()
                 .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<NotificationSubscription>(e =>
+        {
+            e.HasKey(s => new { s.UserId, s.Kind, s.Channel });
+            e.Property(s => s.Kind).HasConversion<string>();
+            e.Property(s => s.Channel).HasConversion<string>();
+            e.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(s => s.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<NotificationLog>(e =>
+        {
+            e.Property(l => l.Kind).HasConversion<string>();
+            e.Property(l => l.Channel).HasConversion<string>();
+            e.HasIndex(l => new { l.UserId, l.Kind, l.Channel, l.Reference }).IsUnique();
+            e.HasOne<IdentityUser>()
+                .WithMany()
+                .HasForeignKey(l => l.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

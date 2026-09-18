@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WhoFights.Data;
+using WhoFights.Data.Models.Domain;
 
 namespace WhoFights.Api.Controllers.Api;
 
@@ -10,9 +11,9 @@ namespace WhoFights.Api.Controllers.Api;
 public class NotificationsController(ApplicationDbContext db) : ControllerBase
 {
     /// <summary>
-    /// Switches the weekly digest off for whoever the token belongs to. No sign-in: this is what the
-    /// Unsubscribe link in the email and Gmail's one-click unsubscribe button call, and neither carries a
-    /// session. Idempotent, so a second click is still a 204.
+    /// Switches every email notification off for whoever the token belongs to. No sign-in: this is what
+    /// the Unsubscribe link in the email and Gmail's one-click unsubscribe button call, and neither
+    /// carries a session. Idempotent, so a second click is still a 204.
     /// </summary>
     [HttpPost("unsubscribe")]
     [AllowAnonymous]
@@ -24,7 +25,8 @@ public class NotificationsController(ApplicationDbContext db) : ControllerBase
             return NotFound();
         }
 
-        prefs.WeeklyDigestEmail = false;
+        db.NotificationSubscriptions.RemoveRange(
+            db.NotificationSubscriptions.Where(s => s.UserId == prefs.UserId && s.Channel == NotificationChannel.Email));
         await db.SaveChangesAsync(ct);
         return NoContent();
     }

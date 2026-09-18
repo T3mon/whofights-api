@@ -2,20 +2,22 @@ using System.Net;
 using System.Text;
 using WhoFights.Data.Models.Domain;
 using WhoFights.Email;
+using WhoFights.Notifications.Channels;
+using WhoFights.Notifications.Localization;
 
-namespace WhoFights.Sync.Digest;
+namespace WhoFights.Notifications.Digest;
 
-// Renders one user's digest in their language: a 7-day strip with a dot
-// per event, then the week as a timeline grouped by day - time on the
-// left, a bar in the promotion's colour, title, main event, location.
-// Everything on one screen, no headliner spotlight.
+// Renders one user's digest as an email, in their language: a 7-day strip
+// with a dot per event, then the week as a timeline grouped by day - time
+// on the left, a bar in the promotion's colour, title, main event,
+// location. Everything on one screen, no headliner spotlight.
 public static class WeeklyDigestEmail
 {
-    public record Links(string Calendar, string ManagePromotions, string UnsubscribePage, string UnsubscribeEndpoint, Func<Event, string> Event);
-
-    public static EmailMessage Render(string to, IReadOnlyList<Event> events, DateOnly weekStart, TimeZoneInfo zone, EmailLocale locale, Links links)
+    public static EmailMessage Render(DigestContent digest, Recipient recipient)
     {
-        var ordered = events.OrderBy(e => e.StartsAt).ToList();
+        var (to, locale, zone, links) = (recipient.Email, recipient.Locale, recipient.Zone, recipient.Links);
+        var weekStart = digest.WeekStart;
+        var ordered = digest.Events.OrderBy(e => e.StartsAt).ToList();
         var range = $"{locale.Date(weekStart, "monthDay")} – {locale.Date(weekStart.AddDays(6), "monthDay")}";
         var count = locale.Plural("digest.events", ordered.Count);
         var summary = locale.T("digest.summary", ("count", count));
@@ -123,10 +125,10 @@ public static class WeeklyDigestEmail
     private static Bout? MainEvent(Event e) => e.Bouts.OrderBy(b => b.OrderIndex).FirstOrDefault();
 
     // Same as matchupLabel in calendarData.ts: fighters if we know them, else the title.
-    private static string Matchup(Event e, EmailLocale locale) =>
+    private static string Matchup(Event e, NotificationLocale locale) =>
         MainEvent(e) is { } m ? $"{m.FighterA.Name} {locale.T("digest.vs")} {m.FighterB.Name}" : e.Title;
 
-    private static string ShortMatchup(Event e, EmailLocale locale) =>
+    private static string ShortMatchup(Event e, NotificationLocale locale) =>
         MainEvent(e) is { } m ? $"{Surname(m.FighterA.Name)} {locale.T("digest.vs")} {Surname(m.FighterB.Name)}" : e.Title;
 
     private static readonly HashSet<string> Suffixes = new(StringComparer.OrdinalIgnoreCase) { "jr.", "jr", "sr.", "sr", "ii", "iii", "iv" };

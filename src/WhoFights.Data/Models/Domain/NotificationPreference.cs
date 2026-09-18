@@ -1,26 +1,22 @@
 namespace WhoFights.Data.Models.Domain;
 
-// One row per user who has ever touched their notification settings.
-// Absence means "all off", so nobody gets mail without opting in.
+// Per-user settings that apply to every notification, whatever the kind or
+// channel. Which notifications are on lives in NotificationSubscription.
 public class NotificationPreference
 {
     public required string UserId { get; set; }
 
-    public bool WeeklyDigestEmail { get; set; }
-
     // IANA id ("Europe/Kyiv") captured from the calendar when the user
-    // saves - the digest renders event times and picks its 7-day window in
-    // this zone, so it matches what the calendar shows them.
+    // saves - notifications pick their moment and render times in this
+    // zone, so they match what the calendar shows them.
     public string TimeZone { get; set; } = "UTC";
 
     // Base language code as the calendar's language picker uses it ("en",
-    // "uk"...) - the digest is written in this language.
-    public string Language { get; set; } = "en";
+    // "uk"...) - notifications are written in this language.
+    public string Language { get; set; } = Languages.Default;
 
-    // Random, unguessable; lets the one-click link in an email switch the
-    // digest off without a sign-in (email clients call it with no session).
+    // Random, unguessable; lets the one-click link in an email switch email
+    // notifications off without a sign-in (email clients call it with no
+    // session).
     public required string UnsubscribeToken { get; set; }
-
-    // Guards against double-sending when a Monday run is retried by hand.
-    public DateTimeOffset? WeeklyDigestLastSentAt { get; set; }
 }

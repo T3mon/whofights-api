@@ -4,7 +4,6 @@ WORKDIR /src
 COPY WhoFights.sln .
 COPY src/WhoFights.Api/WhoFights.Api.csproj src/WhoFights.Api/
 COPY src/WhoFights.Data/WhoFights.Data.csproj src/WhoFights.Data/
-COPY src/WhoFights.Email/WhoFights.Email.csproj src/WhoFights.Email/
 RUN dotnet restore src/WhoFights.Api/WhoFights.Api.csproj
 
 COPY src/ src/
