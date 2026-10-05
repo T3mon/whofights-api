@@ -46,6 +46,8 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
             list.Division,
             list.AsOf,
             list.SyncedAt,
+            // The scraper reads Wikipedia; SourcePage is the article title it parsed.
+            string.IsNullOrEmpty(list.SourcePage) ? null : $"https://en.wikipedia.org/wiki/{Uri.EscapeDataString(list.SourcePage)}",
             entries.Where(e => e.Position == RankingPosition.Champion).Select(ToDto).ToList(),
             entries.Where(e => e.Position == RankingPosition.Ranked).OrderBy(e => e.Rank).ThenBy(e => e.Id).Select(ToDto).ToList(),
             entries.Where(e => e.Position == RankingPosition.TopRated).Select(ToDto).FirstOrDefault());

@@ -19,6 +19,7 @@ public record RankingEntryDto(string Name, int? Rank, string? Belt, string? Wiki
 /// <param name="Division">Weight class as the source names it, e.g. "Women's Bantamweight".</param>
 /// <param name="AsOf">The date the source says these rankings were released. Null when it doesn't say (boxing).</param>
 /// <param name="SyncedAt">When this list was last refreshed from the source.</param>
+/// <param name="SourceUrl">The Wikipedia page these rankings were read from - link it wherever they're shown (CC BY-SA attribution).</param>
 /// <param name="Champions">Belt holders - one for UFC, up to four in boxing.</param>
 /// <param name="Ranked">Contenders in rank order.</param>
 /// <param name="TopRated">The source's top-rated fighter in the division, when it marks one (BoxRec).</param>
@@ -29,6 +30,7 @@ public record RankingDto(
     string Division,
     DateOnly? AsOf,
     DateTimeOffset SyncedAt,
+    string? SourceUrl,
     IReadOnlyList<RankingEntryDto> Champions,
     IReadOnlyList<RankingEntryDto> Ranked,
     RankingEntryDto? TopRated);
