@@ -5,20 +5,32 @@ using WhoFights.Sync.Firestore;
 
 namespace WhoFights.Sync.Services;
 
-// Fetches the Firestore feed once, then upserts that same feed into every
-// target database in turn. One run keeps staging and production fed with
-// identical data on the same schedule, for the price of one container
-// start - Render bills cron jobs per second of runtime, and most of a run
-// is start-up, so a second cron job would nearly double the bill.
-public class EventSyncRunner(FirestoreEventsClient firestoreClient, IServiceProvider services, ILogger<EventSyncRunner> logger)
+// Fetches the scraper's events and rankings from Firestore once, then writes
+// both into every target database in turn. One run keeps staging and
+// production fed with identical data on the same schedule, for the price of
+// one container start - Render bills cron jobs per second of runtime, and
+// most of a run is start-up, so a second cron job would nearly double the bill.
+public class EventSyncRunner(FirestoreClient firestoreClient, IServiceProvider services, ILogger<EventSyncRunner> logger)
 {
-    /// <returns>True when every target synced, false if any of them failed.</returns>
+    /// <returns>True when everything synced into every target, false if anything failed.</returns>
     public async Task<bool> RunAsync(IReadOnlyList<SyncTarget> targets, CancellationToken ct = default)
     {
         var events = await firestoreClient.FetchAllEventsAsync(ct);
-        var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-
         var allSucceeded = true;
+
+        // Rankings are a separate collection; failing to read them must not
+        // stop the events, which are what the calendar can't do without.
+        List<RankingListDto>? rankings = null;
+        try
+        {
+            rankings = await firestoreClient.FetchAllRankingsAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            allSucceeded = false;
+            logger.LogError(ex, "Fetching rankings from Firestore failed; syncing events only");
+        }
+
         foreach (var target in targets)
         {
             // An unreachable or misconfigured database (rotated password, Neon
@@ -26,13 +38,8 @@ public class EventSyncRunner(FirestoreEventsClient firestoreClient, IServiceProv
             // failure at the end so Render's failure email still goes out.
             try
             {
-                var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseNpgsql(target.ConnectionString)
-                    .UseLoggerFactory(loggerFactory)
-                    .Options;
-                await using var db = new ApplicationDbContext(options);
+                await using var db = CreateDbContext(target);
                 var result = await ActivatorUtilities.CreateInstance<EventSyncService>(services, db).SyncAsync(events, ct);
-
                 logger.LogInformation(
                     "Event sync into {Target} ({Host}) complete: {Fetched} fetched, {Created} created, {Updated} updated, {Skipped} skipped",
                     target.Name, target.Host, events.Count, result.Created, result.Updated, result.Skipped);
@@ -42,8 +49,34 @@ public class EventSyncRunner(FirestoreEventsClient firestoreClient, IServiceProv
                 allSucceeded = false;
                 logger.LogError(ex, "Event sync into {Target} ({Host}) failed", target.Name, target.Host);
             }
+
+            if (rankings is null) continue;
+
+            // A fresh context, so nothing a failed event sync left half-done
+            // can be saved along with the rankings. Runs after the events so
+            // fighters new on this run's cards can already be linked.
+            try
+            {
+                await using var db = CreateDbContext(target);
+                var result = await ActivatorUtilities.CreateInstance<RankingSyncService>(services, db).SyncAsync(rankings, ct);
+                logger.LogInformation(
+                    "Ranking sync into {Target} ({Host}) complete: {Saved} lists saved, {Rejected} kept from before (invalid), {Removed} retired, {Linked} of {Entries} names linked to our fighters",
+                    target.Name, target.Host, result.Saved, result.Rejected, result.Removed, result.Linked, result.Entries);
+                if (result.Rejected > 0) allSucceeded = false;
+            }
+            catch (Exception ex)
+            {
+                allSucceeded = false;
+                logger.LogError(ex, "Ranking sync into {Target} ({Host}) failed", target.Name, target.Host);
+            }
         }
 
         return allSucceeded;
     }
+
+    private ApplicationDbContext CreateDbContext(SyncTarget target) =>
+        new(new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseNpgsql(target.ConnectionString)
+            .UseLoggerFactory(services.GetRequiredService<ILoggerFactory>())
+            .Options);
 }
