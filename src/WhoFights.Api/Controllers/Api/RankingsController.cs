@@ -54,5 +54,5 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
     }
 
     private static RankingEntryDto ToDto(RankingEntry entry) =>
-        new(entry.Name, entry.Rank, entry.Belt, entry.WikiLink, entry.Fighter?.TapologyLink);
+        new(entry.Name, entry.Rank, entry.Belt, entry.Fighter?.Record, entry.WikiLink, entry.Fighter?.TapologyLink);
 }

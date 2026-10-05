@@ -4,13 +4,17 @@ namespace WhoFights.Api.Models.Api;
 /// <param name="Name">The name as the ranking source spells it, which can differ from Tapology's spelling on event cards.</param>
 /// <param name="Rank">1-based rank for contenders; ties repeat a number and skip the next (3, 3, 5). Null for champions and the top-rated entry.</param>
 /// <param name="Belt">For champions: whose belt - "UFC", or a boxing sanctioning body ("WBA", "WBC", "IBF", "WBO").</param>
+/// <param name="Record">
+/// The fighter's record ("20-5", "25-7-1") from our own data, when the name is linked to one of our fighters -
+/// as of their latest card in our calendar. Null when not linked.
+/// </param>
 /// <param name="WikiLink">The fighter's Wikipedia article, when there is one.</param>
 /// <param name="FighterLink">
 /// The fighter's Tapology page, when the name could be linked to a fighter on one of our synced cards - the same
 /// link event cards carry, so a card can look up a fighter's rank by it. Null when the fighter isn't on any synced
 /// card or the name was too ambiguous to link safely.
 /// </param>
-public record RankingEntryDto(string Name, int? Rank, string? Belt, string? WikiLink, string? FighterLink);
+public record RankingEntryDto(string Name, int? Rank, string? Belt, string? Record, string? WikiLink, string? FighterLink);
 
 /// <summary>A division's ranking as one source publishes it, mirrored daily from Wikipedia.</summary>
 /// <param name="Id">Stable id, e.g. "mma-ufc-middleweight" or "boxing-boxrec-heavyweight".</param>
