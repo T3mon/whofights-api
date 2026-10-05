@@ -69,6 +69,8 @@ The frontend that consumes these lives at [whofights.com](https://whofights.com)
 
 All of them run on Render's free tier - the first request after ~15 minutes of inactivity takes 30-50 seconds while the instance wakes up.
 
+**Event sync** is one Render cron job for both environments, `whofights-sync-production`, daily at 06:00 UTC (deploy it manually after changes, like the other production services). It fetches the Firestore feed once and writes it into every database it has a connection string for: `ConnectionStrings__DefaultConnection` (production) and `ConnectionStrings__Staging` (staging). One run instead of two matters because Render bills cron jobs per second and most of a run is container start-up. Each database is synced independently - if one fails, the other still gets the data and the run is reported as failed. Locally, `docker compose run --rm sync` syncs just the local database.
+
 **Applying a new migration to a live database** is a manual step, not part of any deploy - run this locally against the target environment's connection string:
 
 ```bash

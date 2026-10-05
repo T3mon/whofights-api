@@ -1,25 +1,27 @@
-using WhoFights.Data;
 using WhoFights.Sync.Firestore;
 using WhoFights.Sync.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-// One-shot: fetch from Firestore, upsert into Postgres, then exit. Render's
-// Cron Job scheduler is what decides when this runs (once daily) - this
-// process doesn't loop or wait, it does the sync once and stops, which is
-// what makes per-second Cron Job billing cheap instead of paying for an
-// always-on worker that spends 99% of its time idle.
+// One-shot: fetch from Firestore, upsert into every configured database,
+// then exit. Render's Cron Job scheduler is what decides when this runs
+// (once daily) - this process doesn't loop or wait, it does the sync once
+// and stops, which is what makes per-second Cron Job billing cheap instead
+// of paying for an always-on worker that spends 99% of its time idle.
+//
+// A single cron job serves both environments: production's connection
+// string as DefaultConnection, staging's as Staging (see SyncTarget).
 var builder = Host.CreateApplicationBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
+var targets = SyncTarget.FromConfiguration(builder.Configuration);
+if (targets.Count == 0)
+{
+    throw new InvalidOperationException("No database to sync into - set ConnectionStrings__DefaultConnection.");
+}
 
 builder.Services.Configure<FirestoreOptions>(builder.Configuration.GetSection(FirestoreOptions.SectionName));
 builder.Services.AddHttpClient<FirestoreEventsClient>();
-builder.Services.AddScoped<EventSyncService>();
 builder.Services.AddScoped<EventSyncRunner>();
 
 using var host = builder.Build();
@@ -28,8 +30,7 @@ using var scope = host.Services.CreateScope();
 try
 {
     var runner = scope.ServiceProvider.GetRequiredService<EventSyncRunner>();
-    await runner.RunAsync();
-    return 0;
+    return await runner.RunAsync(targets) ? 0 : 1;
 }
 catch (Exception ex)
 {
