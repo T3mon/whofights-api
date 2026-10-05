@@ -17,6 +17,8 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<Event> Events => Set<Event>();
     public DbSet<Bout> Bouts => Set<Bout>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
+    public DbSet<RankingList> RankingLists => Set<RankingList>();
+    public DbSet<RankingEntry> RankingEntries => Set<RankingEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -86,6 +88,28 @@ public class ApplicationDbContext : IdentityDbContext
             e.ToTable(t => t.HasCheckConstraint(
                 "CK_UserFollow_ExactlyOneTarget",
                 "(\"PromotionId\" IS NOT NULL) <> (\"FighterId\" IS NOT NULL)"));
+        });
+
+        builder.Entity<RankingList>(e =>
+        {
+            e.HasMany(l => l.Entries)
+                .WithOne(en => en.RankingList)
+                .HasForeignKey(en => en.RankingListId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<RankingEntry>(e =>
+        {
+            // Stored as text so the table reads like the source and reordering
+            // the enum can never silently remap rows.
+            e.Property(en => en.Position).HasConversion<string>();
+
+            // A fighter row going away (it never does today) just unlinks the
+            // ranking entry; the ranking itself is still true.
+            e.HasOne(en => en.Fighter)
+                .WithMany()
+                .HasForeignKey(en => en.FighterId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }
