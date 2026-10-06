@@ -12,7 +12,26 @@ public record PromotionDto(int Id, string Code, string Name);
 /// <param name="FighterB">Second fighter's name.</param>
 /// <param name="FighterBLink">Second fighter's Tapology profile page.</param>
 /// <param name="WeightClass">Weight class, e.g. "155 lbs". Null if Tapology didn't list one.</param>
-public record BoutDto(string FighterA, string FighterALink, string FighterB, string FighterBLink, string? WeightClass);
+/// <param name="FighterARanking">First fighter's ranking or title, when they hold one (see <see cref="RankingBadgeDto"/>).</param>
+/// <param name="FighterBRanking">Second fighter's ranking or title, when they hold one.</param>
+public record BoutDto(
+    string FighterA,
+    string FighterALink,
+    string FighterB,
+    string FighterBLink,
+    string? WeightClass,
+    RankingBadgeDto? FighterARanking,
+    RankingBadgeDto? FighterBRanking);
+
+/// <summary>
+/// Where a fighter stands, for showing next to their name on a card: a title, or a contender rank. MMA uses the
+/// official UFC rankings; boxing uses BoxRec ranks and the four sanctioning bodies' belts.
+/// </summary>
+/// <param name="List">"ufc" (official UFC rankings) or "boxrec".</param>
+/// <param name="Division">The division of that ranking, e.g. "Featherweight".</param>
+/// <param name="Rank">Contender rank; null for champions.</param>
+/// <param name="Belts">Belts held in that division - "UFC", or boxing's "WBA", "WBC", "IBF", "WBO". Empty for contenders.</param>
+public record RankingBadgeDto(string List, string Division, int? Rank, IReadOnlyList<string> Belts);
 
 /// <summary>
 /// One row in the calendar feed. Carries only the headline bout, not the

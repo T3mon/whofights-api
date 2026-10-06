@@ -1,5 +1,6 @@
 using WhoFights.Data;
 using WhoFights.Api.Models.Api;
+using WhoFights.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,7 +8,7 @@ namespace WhoFights.Api.Controllers.Api;
 
 [ApiController]
 [Route("api/events")]
-public class EventsController(ApplicationDbContext db) : ControllerBase
+public class EventsController(ApplicationDbContext db, RankingBadges rankingBadges) : ControllerBase
 {
     /// <summary>
     /// Lists upcoming events for the calendar view, soonest first. Each row carries only the headline bout - call
@@ -58,12 +59,16 @@ public class EventsController(ApplicationDbContext db) : ControllerBase
                 e.SubSeries,
                 e.Bouts
                     .OrderBy(b => b.OrderIndex)
-                    .Select(b => new BoutDto(b.FighterA.Name, b.FighterA.TapologyLink, b.FighterB.Name, b.FighterB.TapologyLink, b.WeightClass))
+                    .Select(b => new BoutDto(b.FighterA.Name, b.FighterA.TapologyLink, b.FighterB.Name, b.FighterB.TapologyLink, b.WeightClass, null, null))
                     .FirstOrDefault(),
                 e.Bouts.Count))
             .ToListAsync(ct);
 
-        return Ok(events);
+        var badges = await rankingBadges.ForFightersAsync(
+            RankingBadges.LinksIn(events.Where(e => e.MainEvent is not null).Select(e => e.MainEvent!)), ct);
+        return Ok(events
+            .Select(e => e.MainEvent is null ? e : e with { MainEvent = RankingBadges.WithBadges(e.MainEvent, badges) })
+            .ToList());
     }
 
     /// <summary>Gets the full fight card for one event.</summary>
@@ -88,10 +93,13 @@ public class EventsController(ApplicationDbContext db) : ControllerBase
                 e.SubSeries,
                 e.Bouts
                     .OrderBy(b => b.OrderIndex)
-                    .Select(b => new BoutDto(b.FighterA.Name, b.FighterA.TapologyLink, b.FighterB.Name, b.FighterB.TapologyLink, b.WeightClass))
+                    .Select(b => new BoutDto(b.FighterA.Name, b.FighterA.TapologyLink, b.FighterB.Name, b.FighterB.TapologyLink, b.WeightClass, null, null))
                     .ToList()))
             .FirstOrDefaultAsync(ct);
 
-        return eventDetail is null ? NotFound() : Ok(eventDetail);
+        if (eventDetail is null) return NotFound();
+
+        var badges = await rankingBadges.ForFightersAsync(RankingBadges.LinksIn(eventDetail.Bouts), ct);
+        return Ok(eventDetail with { Bouts = eventDetail.Bouts.Select(b => RankingBadges.WithBadges(b, badges)).ToList() });
     }
 }
