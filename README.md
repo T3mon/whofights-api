@@ -18,7 +18,7 @@ This is one repo in a multi-repo project - for the full system architecture, why
 ## Project layout
 
 - `Controllers/Api` - the actual JSON endpoints (`/api/events`, `/api/promotions`, `/api/rankings`)
-- `Models/Domain` - EF Core entities (Promotion, Fighter, Event, Bout, UserFollow)
+- `Models/Domain` - EF Core entities (Promotion, Fighter, Event, Bout, UserFollow, RankingList)
 - `Models/Api` - response DTOs
 - `Services/Firestore` - reads and parses the raw Firestore feed
 - `Services/Sync` - transforms that feed and upserts it into Postgres
@@ -57,6 +57,24 @@ Visit `http://localhost:5080/swagger` (port comes from `Properties/launchSetting
 | `Cors__AllowedOrigins` | Frontend origins allowed to call the API | `["http://localhost:5173"]` |
 
 `Firestore:ProjectId` and `Firestore:CollectionName` are already set in `appsettings.json` (not secret - it's a public-read project) and don't need overriding.
+
+## Rankings
+
+The scraper reads Wikipedia's [UFC rankings](https://en.wikipedia.org/wiki/UFC_rankings) and [List of current boxing rankings](https://en.wikipedia.org/wiki/List_of_current_boxing_rankings) into the Firestore `rankings` collection, and the daily sync mirrors it into `RankingLists` / `RankingEntries`. Three lists: `ufc` (the official UFC rankings), `ufc-meta` and `boxrec`. Wikipedia is CC BY-SA, so the site credits it wherever rankings are shown.
+
+The rules, and where each lives:
+
+- **Records: Tapology wins** (`FightRecords.Preferred`). A ranked fighter's record is our own Tapology record whenever we have one. Wikipedia's only fills in when we don't, because anyone can edit Wikipedia. Our Tapology record is the one printed on the fighter's newest card, which is their record going into that fight. The scraper only reads upcoming events, so after a fight the record stays one result behind until their next fight is announced. Every record is normalised to `W-L` or `W-L-D` (a trailing "(1 NC)" is dropped). Anything else is rejected rather than shown. The site shows records for MMA only.
+- **Linking a ranked name to one of our fighters** (`FighterNameMatcher`). A link is made only when exactly one fighter fits, because no badge beats a badge on the wrong person. The matcher tries, in order:
+  1. The same name, ignoring accents, case and punctuation.
+  2. The same letters, spaced differently.
+  3. The full name in the fighter's Tapology address. This catches nicknames: "Bia Mesquita" is `.../fighters/210835-beatriz-mesquita`.
+  4. The same surname with a short-form first name.
+
+  Linking reruns with every ranking sync, so fighters new to our cards get linked on the next run.
+- **Badges on cards** (`RankingBadges`). MMA uses the official UFC list; boxing uses BoxRec ranks and the four sanctioning bodies' belts. A title beats a contender rank, and the official UFC list beats BoxRec. The Meta list and "top rated" aren't used on cards.
+- **Bad or stale lists** (`RankingSyncService`). A list whose ranks don't add up is skipped and its previous version kept; ties like 3, 3, 5 are fine. A list that hasn't been refreshed for 14 days is retired.
+- **Display order** (frontend). Heaviest division first, with the women's divisions after the men's.
 
 ## Deployments
 
