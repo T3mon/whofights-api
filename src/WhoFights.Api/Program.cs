@@ -74,6 +74,7 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddProblemDetails();
+builder.Services.AddScoped<WhoFights.Api.Services.RankingBadges>();
 
 // Lets a separately-hosted React frontend (a different origin) call /api/*.
 // Origins come from config, not hardcoded, so prod can point at the real
