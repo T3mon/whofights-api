@@ -75,6 +75,7 @@ The rules, and where each lives:
 - **Badges on cards** (`RankingBadges`). MMA uses the official UFC list; boxing uses BoxRec ranks and the four sanctioning bodies' belts. A title beats a contender rank, and the official UFC list beats BoxRec. The Meta list and "top rated" aren't used on cards.
 - **Bad or stale lists** (`RankingSyncService`). A list whose ranks don't add up is skipped and its previous version kept; ties like 3, 3, 5 are fine. A list that hasn't been refreshed for 14 days is retired.
 - **Display order** (frontend). Heaviest division first, with the women's divisions after the men's.
+- **Wikipedia links** (frontend `recordLink`). We store and serve the plain article link. The site adds the anchor so a fighter's name opens straight at their record: `#Mixed_martial_arts_record` for MMA, `#Professional_boxing_record` for boxing.
 
 ## Deployments
 
