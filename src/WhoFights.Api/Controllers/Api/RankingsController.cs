@@ -31,20 +31,10 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
             .OrderBy(l => l.Sport).ThenBy(l => l.List).ThenBy(l => l.Division)
             .ToListAsync(ct);
 
-        // Fighters with a card still ahead: their Tapology record is the one
-        // going into that fight, i.e. current (see FightRecords.Choose).
-        var now = DateTimeOffset.UtcNow;
-        var upcoming = (await db.Bouts
-                .Where(b => b.Event.StartsAt > now)
-                .Select(b => new { b.FighterAId, b.FighterBId })
-                .ToListAsync(ct))
-            .SelectMany(b => new[] { b.FighterAId, b.FighterBId })
-            .ToHashSet();
-
-        return Ok(lists.Select(l => ToDto(l, upcoming)).ToList());
+        return Ok(lists.Select(ToDto).ToList());
     }
 
-    private static RankingDto ToDto(RankingList list, HashSet<long> fightersWithUpcomingCard)
+    private static RankingDto ToDto(RankingList list)
     {
         // Entry ids follow the source's order, which keeps tied ranks in the
         // order the source lists them.
@@ -66,10 +56,7 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
             entry.Name,
             entry.Rank,
             entry.Belt,
-            FightRecords.Choose(
-                entry.Fighter?.Record,
-                entry.FighterId is { } id && fightersWithUpcomingCard.Contains(id),
-                entry.Record),
+            FightRecords.Preferred(entry.Fighter?.Record, entry.Record),
             entry.WikiLink,
             entry.Fighter?.TapologyLink);
     }
