@@ -76,6 +76,7 @@ public class RankingSyncService(ApplicationDbContext db, ILogger<RankingSyncServ
                     Belt = position == RankingPosition.Champion ? fighter.Belt : null,
                     Name = fighter.Name,
                     WikiLink = fighter.WikiLink,
+                    Record = FightRecords.Normalize(fighter.Record),
                     FighterId = match?.Id,
                 });
                 entries++;

@@ -21,7 +21,10 @@ public class EventSyncService(ApplicationDbContext db, ILogger<EventSyncService>
         var fighters = await db.Fighters.ToDictionaryAsync(f => f.Id, ct);
         var existingEvents = await db.Events.Include(e => e.Bouts).ToDictionaryAsync(e => e.TapologySlug, ct);
 
-        foreach (var dto in events)
+        // Oldest card first, so a fighter on several cards ends up with the
+        // record from their newest one - each card lists the record as it
+        // stood going into that fight.
+        foreach (var dto in events.OrderBy(e => SortDate(e.Date)))
         {
             DateTimeOffset startsAt;
             try
@@ -97,7 +100,8 @@ public class EventSyncService(ApplicationDbContext db, ILogger<EventSyncService>
         if (cache.TryGetValue(id.Value, out var fighter))
         {
             fighter.Name = dto.Name;
-            fighter.Record = dto.Record;
+            // A card that lists no record shouldn't wipe the one we have.
+            fighter.Record = dto.Record ?? fighter.Record;
             return fighter;
         }
 
@@ -117,6 +121,19 @@ public class EventSyncService(ApplicationDbContext db, ILogger<EventSyncService>
 
     // "Saturday 09.08.2026 at 07:00 PM ET" -> a real DateTimeOffset.
     // Tapology always normalizes to US Eastern time.
+    // Unparseable dates sort last; the loop skips those events anyway.
+    private static DateTimeOffset SortDate(string raw)
+    {
+        try
+        {
+            return ParseTapologyDate(raw);
+        }
+        catch (Exception)
+        {
+            return DateTimeOffset.MaxValue;
+        }
+    }
+
     private static DateTimeOffset ParseTapologyDate(string raw)
     {
         var withoutTz = raw.Replace(" ET", "", StringComparison.OrdinalIgnoreCase).Trim();

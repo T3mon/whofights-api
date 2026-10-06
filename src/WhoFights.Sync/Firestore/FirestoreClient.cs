@@ -162,7 +162,7 @@ public class FirestoreClient(HttpClient httpClient, IOptions<FirestoreOptions> o
 
     private static RankedFighterDto? ParseRankedFighter(JsonElement? fields, int? rank = null, string? belt = null) =>
         fields is { } f && GetString(f, "name") is { Length: > 0 } name
-            ? new RankedFighterDto(name, GetString(f, "wikiLink"), rank, belt)
+            ? new RankedFighterDto(name, GetString(f, "wikiLink"), GetString(f, "record"), rank, belt)
             : null;
 
     // Firestore's REST format wraps every value in a type tag, e.g.

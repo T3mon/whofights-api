@@ -20,6 +20,7 @@ public class RankingListDto
     public RankedFighterDto? TopRated { get; init; }
 }
 
+/// <param name="Record">The record as the source lists it, e.g. "20-3 (1 NC)" - normalised before it's stored.</param>
 /// <param name="Rank">Set for ranked entries only.</param>
 /// <param name="Belt">Set for champions only ("UFC", "WBA", ...).</param>
-public record RankedFighterDto(string Name, string? WikiLink, int? Rank = null, string? Belt = null);
+public record RankedFighterDto(string Name, string? WikiLink, string? Record, int? Rank = null, string? Belt = null);

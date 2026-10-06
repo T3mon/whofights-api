@@ -31,10 +31,20 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
             .OrderBy(l => l.Sport).ThenBy(l => l.List).ThenBy(l => l.Division)
             .ToListAsync(ct);
 
-        return Ok(lists.Select(ToDto).ToList());
+        // Fighters with a card still ahead: their Tapology record is the one
+        // going into that fight, i.e. current (see FightRecords.Choose).
+        var now = DateTimeOffset.UtcNow;
+        var upcoming = (await db.Bouts
+                .Where(b => b.Event.StartsAt > now)
+                .Select(b => new { b.FighterAId, b.FighterBId })
+                .ToListAsync(ct))
+            .SelectMany(b => new[] { b.FighterAId, b.FighterBId })
+            .ToHashSet();
+
+        return Ok(lists.Select(l => ToDto(l, upcoming)).ToList());
     }
 
-    private static RankingDto ToDto(RankingList list)
+    private static RankingDto ToDto(RankingList list, HashSet<long> fightersWithUpcomingCard)
     {
         // Entry ids follow the source's order, which keeps tied ranks in the
         // order the source lists them.
@@ -46,11 +56,21 @@ public class RankingsController(ApplicationDbContext db) : ControllerBase
             list.Division,
             list.AsOf,
             list.SyncedAt,
-            entries.Where(e => e.Position == RankingPosition.Champion).Select(ToDto).ToList(),
-            entries.Where(e => e.Position == RankingPosition.Ranked).OrderBy(e => e.Rank).ThenBy(e => e.Id).Select(ToDto).ToList(),
-            entries.Where(e => e.Position == RankingPosition.TopRated).Select(ToDto).FirstOrDefault());
-    }
+            // The scraper reads Wikipedia; SourcePage is the article title it parsed.
+            string.IsNullOrEmpty(list.SourcePage) ? null : $"https://en.wikipedia.org/wiki/{Uri.EscapeDataString(list.SourcePage)}",
+            entries.Where(e => e.Position == RankingPosition.Champion).Select(Entry).ToList(),
+            entries.Where(e => e.Position == RankingPosition.Ranked).OrderBy(e => e.Rank).ThenBy(e => e.Id).Select(Entry).ToList(),
+            entries.Where(e => e.Position == RankingPosition.TopRated).Select(Entry).FirstOrDefault());
 
-    private static RankingEntryDto ToDto(RankingEntry entry) =>
-        new(entry.Name, entry.Rank, entry.Belt, entry.WikiLink, entry.Fighter?.TapologyLink);
+        RankingEntryDto Entry(RankingEntry entry) => new(
+            entry.Name,
+            entry.Rank,
+            entry.Belt,
+            FightRecords.Choose(
+                entry.Fighter?.Record,
+                entry.FighterId is { } id && fightersWithUpcomingCard.Contains(id),
+                entry.Record),
+            entry.WikiLink,
+            entry.Fighter?.TapologyLink);
+    }
 }

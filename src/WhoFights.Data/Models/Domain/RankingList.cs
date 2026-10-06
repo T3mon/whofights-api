@@ -58,6 +58,11 @@ public class RankingEntry
     public required string Name { get; set; }
     public string? WikiLink { get; set; }
 
+    // The record the ranking source lists, already normalised (see
+    // FightRecords). The API prefers our own Tapology record when the
+    // fighter is linked; this covers everyone else.
+    public string? Record { get; set; }
+
     // Our fighter, when the name could be matched safely (see
     // FighterNameMatcher in WhoFights.Sync). Null for fighters we've never
     // seen on a synced card, and for names too ambiguous to guess.
