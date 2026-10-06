@@ -27,19 +27,16 @@ public static partial class FightRecords
     }
 
     /// <summary>
-    /// Which record to show for a ranked fighter. A Tapology record comes from
-    /// an event card, and a card lists each fighter's record going into that
-    /// fight: current while the fight is still ahead, one result behind once it
-    /// has happened. So Tapology wins while the fighter's newest card is
-    /// upcoming - it's refreshed by every sync, while the ranking source is a
-    /// page anyone can edit - and the ranking source (Wikipedia) wins after
-    /// that, because it already includes the result. Each falls back to the
-    /// other when it has no valid record.
+    /// Which record to show for a ranked fighter: Tapology's whenever we have
+    /// a valid one. The ranking source is a page anyone can edit, so a vandal
+    /// can put any record there; Tapology is the one to trust. Ours is the
+    /// record printed on the fighter's newest card - their record going into
+    /// that fight - so after the fight it stays one result behind until their
+    /// next card is announced. The ranking source only fills in for fighters
+    /// we have no Tapology record for.
     /// </summary>
-    public static string? Choose(string? tapology, bool tapologyIsCurrent, string? rankingSource) =>
-        tapologyIsCurrent
-            ? Normalize(tapology) ?? Normalize(rankingSource)
-            : Normalize(rankingSource) ?? Normalize(tapology);
+    public static string? Preferred(string? tapology, string? rankingSource) =>
+        Normalize(tapology) ?? Normalize(rankingSource);
 
     [GeneratedRegex(@"\s*\(\s*\d+\s*NC\s*\)", RegexOptions.IgnoreCase)]
     private static partial Regex NoContests();
