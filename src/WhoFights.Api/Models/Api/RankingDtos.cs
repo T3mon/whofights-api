@@ -5,8 +5,9 @@ namespace WhoFights.Api.Models.Api;
 /// <param name="Rank">1-based rank for contenders; ties repeat a number and skip the next (3, 3, 5). Null for champions and the top-rated entry.</param>
 /// <param name="Belt">For champions: whose belt - "UFC", or a boxing sanctioning body ("WBA", "WBC", "IBF", "WBO").</param>
 /// <param name="Record">
-/// The fighter's record ("20-5", "25-7-1") from our own data, when the name is linked to one of our fighters -
-/// as of their latest card in our calendar. Null when not linked.
+/// The fighter's record, always "W-L" or "W-L-D". Our own Tapology record when the fighter is linked and has a card
+/// still ahead (a card lists the record going into that fight); otherwise the ranking source's (Wikipedia), which
+/// already includes their latest result. Null when neither has a valid one.
 /// </param>
 /// <param name="WikiLink">The fighter's Wikipedia article, when there is one.</param>
 /// <param name="FighterLink">
