@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using WhoFights.Data;
 using WhoFights.Sync.Firestore;
@@ -48,6 +49,9 @@ public class EventSyncRunner(FirestoreClient firestoreClient, IServiceProvider s
             {
                 allSucceeded = false;
                 logger.LogError(ex, "Event sync into {Target} ({Host}) failed", target.Name, target.Host);
+                // Still unreachable after the retries: the rankings would only
+                // wait out the same retries again, on billed time.
+                if (ex is RetryLimitExceededException) continue;
             }
 
             if (rankings is null) continue;
@@ -74,9 +78,15 @@ public class EventSyncRunner(FirestoreClient firestoreClient, IServiceProvider s
         return allSucceeded;
     }
 
+    // Neon suspends a database that's been idle, and one slow to wake (or a
+    // network blip) timed out a whole staging sync once. So each query and
+    // save is retried on a transient error - a few times only, since Render
+    // bills the cron per second and a database that's really down won't come
+    // back within the run anyway.
     private ApplicationDbContext CreateDbContext(SyncTarget target) =>
         new(new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseNpgsql(target.ConnectionString)
+            .UseNpgsql(target.ConnectionString, npgsql =>
+                npgsql.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(10), errorCodesToAdd: null))
             .UseLoggerFactory(services.GetRequiredService<ILoggerFactory>())
             .Options);
 }
